@@ -70,9 +70,10 @@ class GraphEdgePropagation(six.with_metaclass(ABCMeta), BaseEstimator, Classifie
 
         label_distributions, edge_exists, labeled, y_static = initialize_distributions(g)
         # actual graph construction
-        graph_matrix = - nx.normalized_laplacian_matrix(g.g_nx, nodelist=g.node_order).toarray()
+        graph_matrix = - nx.normalized_laplacian_matrix(g.g_nx, nodelist=g.node_order)
         graph_matrix.setdiag(0)  # graph_matrix = graph_matrix - np.diag(np.diagonal(graph_matrix))
 
+        graph_matrix = graph_matrix.toarray()
         label_distributions = perform_edge_prop_on_graph(graph_matrix, label_distributions, edge_exists,
                                                          labeled, y_static)
 

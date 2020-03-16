@@ -56,7 +56,7 @@ class TemporalGraph(BaseGraph):
         edge_weight_dict = {}
         agg_e_maps_to = agg_g.agg_e_maps_to  # we put it there in build_aggregated_graph()
         decayed_edge_times_in_order = TemporalGraph.decay_function(agg_g.edge_timestamp_in_order, ref_timestamp)
-        for agg_e, g_idxs in agg_e_maps_to.to_dict().items():
+        for agg_e, g_idxs in agg_e_maps_to.items():
             # sum of decayed weights IMPORTANT ALGORITHMIC CHOICE
             edge_weight_dict[agg_e] = decayed_edge_times_in_order[g_idxs].sum()
         nx.set_edge_attributes(agg_g.g_nx, edge_weight_dict, dec_time_attr)

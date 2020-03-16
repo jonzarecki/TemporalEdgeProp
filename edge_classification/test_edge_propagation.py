@@ -4,6 +4,8 @@ import networkx as nx
 from datetime import datetime, timedelta
 
 from edge_classification.edge_propagation import GraphEdgePropagation
+from edge_classification.graph_wrappers.binary_labeled_graph import BinaryLabeledGraph
+from edge_classification.graph_wrappers.binary_labeled_temporal_graph import BinaryLabeledTemporalGraph
 from edge_classification.temporal_edge_propagation import TemporalGraphEdgePropagation
 
 

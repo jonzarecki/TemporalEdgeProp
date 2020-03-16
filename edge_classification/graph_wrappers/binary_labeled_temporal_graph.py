@@ -1,8 +1,11 @@
 from typing import Tuple
 
+import numpy as np
 import networkx as nx
 from edge_classification.graph_wrappers.binary_labeled_graph import BinaryLabeledGraph
 from edge_classification.graph_wrappers.temporal_graph import TemporalGraph
+
+AGG_TIMES_LIST_ATTR = "agg_times_list"
 
 
 class BinaryLabeledTemporalGraph(BinaryLabeledGraph, TemporalGraph):
@@ -52,9 +55,9 @@ class BinaryLabeledTemporalGraph(BinaryLabeledGraph, TemporalGraph):
                 g_edge_idx_to_agg_edge[g_edge_idx] = agg_g_e
 
         # add attributes to edges
-        edge_time_weights = {e: np.array(t_list) for (e, t_list) in edge_time_weights.to_dict().items()}
-        nx.set_edge_attributes(agg_g, edge_time_weights, AGG_TIMES_LIST_ATTR)  # TODO: missing
-        nx.set_edge_attributes(agg_g, agg_edge_labels.to_dict(), self.y_attr)
+        edge_time_weights = {e: np.array(t_list) for (e, t_list) in edge_time_weights.items()}
+        nx.set_edge_attributes(agg_g, edge_time_weights, AGG_TIMES_LIST_ATTR)
+        nx.set_edge_attributes(agg_g, agg_edge_labels, self.y_attr)
 
         # wrap with LabeledGraph
         agg_g_l = BinaryLabeledGraph(agg_g, self.y_attr)

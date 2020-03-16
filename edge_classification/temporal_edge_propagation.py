@@ -108,14 +108,14 @@ class TemporalGraphEdgePropagation(GraphEdgePropagation):
         items_in_test = [(i, e) for (i, e) in enumerate(g.edge_order) if g.g_nx.get_edge_data(*e)[self.in_test]]
         agg_g, g_edge_idx_to_agg_edge = g.build_aggregated_graph()
         if self.is_parallel:
-            func = partial(bulk_calc_temporal_edge_prop, agg_g=agg_g, g_edge_times_dict=g.edge_time_dict,
+            func = partial(bulk_calc_temporal_edge_prop, agg_g=agg_g, g_edge_times_dict=g.edge_times_dict,
                            g_edge_idx_to_agg_edge=g_edge_idx_to_agg_edge)
             with multiprocessing.Pool(processes=self.proc_num) as p:
                 results = p.map(func, [items_in_test[st_i: (st_i + self.chunk_size)] for st_i
                                        in range(0, len(items_in_test) + self.chunk_size, self.chunk_size)])
             results_combined = sum(results, list())
         else:  # serial
-            results_combined = bulk_calc_temporal_edge_prop(items_in_test, agg_g, g.edge_time_dict,
+            results_combined = bulk_calc_temporal_edge_prop(items_in_test, agg_g, g.edge_times_dict,
                                                             g_edge_idx_to_agg_edge)
         return results_combined
 
@@ -139,7 +139,7 @@ class TemporalGraphEdgePropagation(GraphEdgePropagation):
 
         # actual graph construction
         agg_graph_matrix = - nx.normalized_laplacian_matrix(agg_g.g_nx, nodelist=agg_g.node_order,
-                                                        weight=DECAYED_TIME_WEIGHT)  #TODO: missing
+                                                        weight=DECAYED_TIME_WEIGHT)
         agg_graph_matrix.setdiag(0)
 
         # run edge-prop for "future"
