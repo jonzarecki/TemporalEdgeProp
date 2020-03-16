@@ -7,7 +7,7 @@ from edge_classification.edge_propagation import GraphEdgePropagation
 from edge_classification.temporal_edge_propagation import TemporalGraphEdgePropagation
 
 
-class MyTestCase(unittest.TestCase):
+class TestEdgePropAlgs(unittest.TestCase):
     def test_normal_edge_prop(self):
         """
         Easy test for sanity for normal EdgeProp

@@ -1,0 +1,32 @@
+name: edgeprop
+channels:
+- conda-forge
+- defaults
+
+dependencies:
+# Core scientific python
+- numpy
+- matplotlib
+- python=3.7.*
+- seaborn
+- pip
+- scikit-learn
+- argparse
+
+# Jupyter Environment
+- autopep8
+- notebook
+- ipython
+- jupyter_contrib_nbextensions
+- jupyter
+- nb_conda
+
+# Web app / visualization
+- bokeh
+- holoviews
+
+- pip:
+    - panel
+    - nbclean
+    - tqdm
+    - pathos  # for parmap
