@@ -1,7 +1,6 @@
 import gc
 import os
 import warnings
-import warings
 from abc import ABCMeta
 from typing import Tuple
 
@@ -13,6 +12,8 @@ import six
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.extmath import safe_sparse_dot
+
+from edge_classification.graph_wrappers.binary_labeled_graph import BinaryLabeledGraph
 
 EDGEPROP_BASE_DIR = os.path.dirname(__file__) + "/"
 

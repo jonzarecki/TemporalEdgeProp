@@ -9,8 +9,13 @@ import networkx as nx
 import numpy as np
 from sklearn.preprocessing import minmax_scale
 
+from edge_classification.graph_wrappers.binary_labeled_graph import BinaryLabeledGraph
+from edge_classification.graph_wrappers.binary_labeled_temporal_graph import BinaryLabeledTemporalGraph
+from edge_classification.graph_wrappers.temporal_graph import TemporalGraph
 from .edge_propagation import GraphEdgePropagation, initialize_distributions, perform_edge_prop_on_graph, \
     EDGEPROP_BASE_DIR
+
+DECAYED_TIME_WEIGHT = 'time_weight'
 
 
 class TemporalGraphEdgePropagation(GraphEdgePropagation):
@@ -34,14 +39,14 @@ class TemporalGraphEdgePropagation(GraphEdgePropagation):
     def __init__(self, y_attr: str, in_test: str, time_attr: str, max_iter=50, tol=1e-7,
                  on_future=False, is_parallel=False, proc_num=10, chunk_size=100):
         super(TemporalGraphEdgePropagation, self).__init__(y_attr, max_iter, tol)
-        self.time_attr = time_attr
-        self.in_test = in_test
         self.chunk_size = chunk_size
         self.proc_num = proc_num
         self.on_future = on_future
         self.is_parallel = is_parallel
+        self.time_attr = time_attr
+        self.in_test = in_test
 
-    def predict(self):
+    def predict(self, X=None):
         """
         Predict labels across all edges
 
@@ -56,7 +61,7 @@ class TemporalGraphEdgePropagation(GraphEdgePropagation):
         """
         return np.sign(self.edge_prop_results)  # only for 2-class for now
 
-    def predict_proba(self):
+    def predict_proba(self, X=None):
         probas_1_cls = minmax_scale(self.edge_prop_results)
         return np.array([(1-p, p) for p in probas_1_cls])
 
@@ -75,7 +80,7 @@ class TemporalGraphEdgePropagation(GraphEdgePropagation):
             with open(path, 'rb') as f:
                 self.edge_prop_results = pickle.load(f)
             return self
-        logging.info("Temporal Edge Prop - " + path)
+        logging.info(f"Temporal Edge Prop - {path}")
         if not self.on_future:
             results_combined = self._fit_for_past(g)
         else:  # on future
@@ -134,7 +139,7 @@ class TemporalGraphEdgePropagation(GraphEdgePropagation):
 
         # actual graph construction
         agg_graph_matrix = - nx.normalized_laplacian_matrix(agg_g.g_nx, nodelist=agg_g.node_order,
-                                                        weight=DECAYED_TIME_WEIGHT)
+                                                        weight=DECAYED_TIME_WEIGHT)  #TODO: missing
         agg_graph_matrix.setdiag(0)
 
         # run edge-prop for "future"

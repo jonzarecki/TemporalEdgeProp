@@ -5,7 +5,7 @@ from typing import List, Dict, Any
 import networkx as nx
 import numpy as np
 
-from base_graph import BaseGraph
+from edge_classification.graph_wrappers.base_graph import BaseGraph
 
 
 class TemporalGraph(BaseGraph):
