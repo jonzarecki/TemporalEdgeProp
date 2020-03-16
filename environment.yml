@@ -25,6 +25,7 @@ dependencies:
 - holoviews
 
 - pip:
+    - networkx==2.4.*
     - panel
     - argparse
     - nbclean
