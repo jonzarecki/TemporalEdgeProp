@@ -3,10 +3,10 @@ import numpy as np
 import networkx as nx
 from datetime import datetime, timedelta
 
-from edge_classification.edge_propagation import GraphEdgePropagation
+from edge_classification.models.edge_propagation import GraphEdgePropagation
 from edge_classification.graph_wrappers.binary_labeled_graph import BinaryLabeledGraph
 from edge_classification.graph_wrappers.binary_labeled_temporal_graph import BinaryLabeledTemporalGraph
-from edge_classification.temporal_edge_propagation import TemporalGraphEdgePropagation
+from edge_classification.models.temporal_edge_propagation import TemporalGraphEdgePropagation
 
 
 class TestEdgePropAlgs(unittest.TestCase):
