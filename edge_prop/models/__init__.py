@@ -1,0 +1,3 @@
+from edge_prop.models.base_model import BaseModel
+from edge_prop.models.edge_propagation import GraphEdgePropagation
+from edge_prop.models.temporal_edge_propagation import TemporalGraphEdgePropagation
