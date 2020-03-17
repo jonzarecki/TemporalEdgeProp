@@ -3,8 +3,11 @@ import numpy as np
 
 from edge_prop.models import BaseModel
 from edge_prop.graph_wrappers import BinaryLabeledGraph
-from edge_prop.common.utils import initialize_distributions, perform_edge_prop_on_graph
+from edge_prop.models.edge_prop_utils import initialize_distributions, perform_edge_prop_on_graph
+from constants import CACHE_DIR
 
+
+EDGEPROP_BASE_DIR = f"{CACHE_DIR}/temporal_edge_prop/"
 
 class GraphEdgePropagation(BaseModel):
     """
