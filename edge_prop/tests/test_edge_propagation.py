@@ -34,7 +34,6 @@ class TestEdgePropAlgs(unittest.TestCase):
     def days_from_now(days: int) -> timedelta:
         return datetime.now() - timedelta(days=days)
 
-
     def test_temporal_edge_prop(self):
         """
         Easy test for sanity for Temporal EdgeProp

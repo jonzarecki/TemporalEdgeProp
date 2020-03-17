@@ -61,7 +61,7 @@ class TemporalGraphEdgePropagation(GraphEdgePropagation):
 
     def predict_proba(self, X=None):
         probas_1_cls = minmax_scale(self.edge_prop_results)
-        return np.array([(1-p, p) for p in probas_1_cls])
+        return np.array([(1 - p, p) for p in probas_1_cls])
 
     def fit(self, g: BinaryLabeledTemporalGraph):
         """
@@ -73,7 +73,8 @@ class TemporalGraphEdgePropagation(GraphEdgePropagation):
         :param g: The graph
         :return: returns a pointer to self
         """
-        path = EDGEPROP_BASE_DIR + "models/temporal_edge_prop/" + str(hash(tuple([itm[1] for itm in g.edge_labels]))) + ".bin"
+        path = EDGEPROP_BASE_DIR + "models/temporal_edge_prop/" + str(
+            hash(tuple([itm[1] for itm in g.edge_labels]))) + ".bin"
         if os.path.isfile(path):
             with open(path, 'rb') as f:
                 self.edge_prop_results = pickle.load(f)
@@ -137,7 +138,7 @@ class TemporalGraphEdgePropagation(GraphEdgePropagation):
 
         # actual graph construction
         agg_graph_matrix = - nx.normalized_laplacian_matrix(agg_g.g_nx, nodelist=agg_g.node_order,
-                                                        weight=DECAYED_TIME_WEIGHT)
+                                                            weight=DECAYED_TIME_WEIGHT)
         agg_graph_matrix.setdiag(0)
 
         # run edge-prop for "future"
@@ -151,5 +152,3 @@ class TemporalGraphEdgePropagation(GraphEdgePropagation):
             results.append((i, inst_pred))
 
         return results
-
-

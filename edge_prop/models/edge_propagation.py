@@ -6,8 +6,6 @@ from edge_prop.graph_wrappers import BinaryLabeledGraph
 from edge_prop.common.utils import initialize_distributions, perform_edge_prop_on_graph
 
 
-
-
 class GraphEdgePropagation(BaseModel):
     """
     Edge Propgation

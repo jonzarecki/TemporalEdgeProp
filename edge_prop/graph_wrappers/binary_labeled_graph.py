@@ -15,6 +15,7 @@ class BinaryLabeledGraph(BaseGraph):
     classes - list keeping the unique tags (without 0 which is unlabeled)
 
     """
+
     def __init__(self, g: nx.Graph, y_attr: str, **kwargs):
         super(BinaryLabeledGraph, self).__init__(g, **kwargs)
         self.y_attr = y_attr

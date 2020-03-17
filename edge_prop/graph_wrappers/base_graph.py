@@ -1,5 +1,6 @@
 import networkx as nx
 
+
 class BaseGraph:
     """
     Util class for keeping useful info on graphs
@@ -12,6 +13,7 @@ class BaseGraph:
     edge_order - sorted order of the edges
     n_edges - number of edges
     """
+
     def __init__(self, g: nx.Graph, **kwargs):
         self.g_nx = g
 

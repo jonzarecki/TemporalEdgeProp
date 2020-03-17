@@ -2,7 +2,6 @@ from typing import Tuple
 import gc
 import numpy as np
 import networkx as nx
-import scipy
 from scipy import sparse
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.extmath import safe_sparse_dot

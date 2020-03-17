@@ -10,5 +10,6 @@ def run(datasets, models):
             model.fit(graph_nx, y, mask)
             y_pred = model.predict(graph_nx)
 
+
 if __name__ == '__main__':
     run()

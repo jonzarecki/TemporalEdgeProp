@@ -10,8 +10,8 @@ from edge_prop.graph_wrappers.binary_labeled_graph import BinaryLabeledGraph
 
 def remove_labels(graph: BinaryLabeledGraph, keep_labels_precent: float = 0.5) -> Tuple[
     BinaryLabeledGraph, np.ndarray, np.ndarray]:
-
-    keep_label_indices = np.random.choice(range(graph.n_edges), size=int(keep_labels_precent * graph.n_edges), replace=False)
+    keep_label_indices = np.random.choice(range(graph.n_edges), size=int(keep_labels_precent * graph.n_edges),
+                                          replace=False)
     label_mask = np.zeros(graph.n_edges, dtype=np.int)
     label_mask[keep_label_indices] = 1
 

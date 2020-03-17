@@ -21,6 +21,7 @@ class BinaryLabeledTemporalGraph(BinaryLabeledGraph, TemporalGraph):
         classes - list keeping the unique tags (without 0 which is unlabeled)
 
         """
+
     def __init__(self, g: nx.Graph, y_attr: str, time_attr: str, **kwargs):
         super(BinaryLabeledTemporalGraph, self).__init__(g=g, y_attr=y_attr, time_attr=time_attr, **kwargs)
 
