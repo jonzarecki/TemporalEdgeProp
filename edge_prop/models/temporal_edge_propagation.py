@@ -34,7 +34,7 @@ class TemporalGraphEdgePropagation(GraphEdgePropagation):
     """
     _variant = "propagation"
 
-    def __init__(self, y_attr: str, in_test: str, time_attr: str, max_iter=50, tol=1e-7,
+    def __init__(self, y_attr: str = 'label', in_test: str = 'in_test', time_attr: str = 'time', max_iter=50, tol=1e-7,
                  on_future=False, is_parallel=False, proc_num=10, chunk_size=100):
         super(TemporalGraphEdgePropagation, self).__init__(y_attr, max_iter, tol)
         self.chunk_size = chunk_size

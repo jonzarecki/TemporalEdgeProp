@@ -3,7 +3,7 @@ import numpy as np
 import networkx as nx
 
 from edge_prop.graph_wrappers import BinaryLabeledGraph
-from edge_prop.graph_wrappers import TemporalGraph
+from edge_prop.graph_wrappers.temporal_graph import TemporalGraph
 from edge_prop.constants import AGG_TIMES_LIST_ATTR
 
 

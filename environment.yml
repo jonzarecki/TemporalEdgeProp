@@ -32,3 +32,4 @@ dependencies:
     - nbclean
     - tqdm
     - pathos  # for parmap
+    - networkx

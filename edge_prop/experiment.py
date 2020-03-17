@@ -1,15 +1,22 @@
+import numpy as np
+
 from edge_prop.data_loader import DataLoader
+from edge_prop.constants import DATASET2PATH
+from edge_prop.models import GraphEdgePropagation, TemporalGraphEdgePropagation
 
 
 def run(datasets, models):
     for dataset in datasets:
-        data_loader = DataLoader(dataset)
-        graph_nx, y, mask = data_loader.load_data()
+        graph, true_labels = DataLoader(DATASET2PATH[dataset]).load_data()
 
         for model in models:
-            model.fit(graph_nx, y, mask)
-            y_pred = model.predict(graph_nx)
+            model.fit(graph)
+            y_pred = model.predict()
+
+            print(model.__str__(), 'acc:', np.sum(true_labels == y_pred))
 
 
 if __name__ == '__main__':
-    run()
+    datasets = DATASET2PATH.keys()
+    models = [GraphEdgePropagation(), TemporalGraphEdgePropagation()]
+    run(datasets, models)
