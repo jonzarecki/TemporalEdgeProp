@@ -1,4 +1,5 @@
 from typing import Tuple
+import gc
 import numpy as np
 import networkx as nx
 import scipy
