@@ -1,24 +1,21 @@
 import gc
-import os
 import warnings
-from abc import ABCMeta
+from abc import ABC
 from typing import Tuple
-
-import scipy
 
 import networkx as nx
 import numpy as np
-import six
+import scipy
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.extmath import safe_sparse_dot
 
+from constants import CACHE_DIR
 from edge_classification.graph_wrappers.binary_labeled_graph import BinaryLabeledGraph
 
-EDGEPROP_BASE_DIR = os.path.dirname(__file__) + "/"
+EDGEPROP_BASE_DIR = f"{CACHE_DIR}/temporal_edge_prop/"
 
-
-class GraphEdgePropagation(six.with_metaclass(ABCMeta), BaseEstimator, ClassifierMixin):
+class GraphEdgePropagation(ABC, BaseEstimator, ClassifierMixin):
     """
     Edge Propgation
 
@@ -133,6 +130,7 @@ def perform_edge_prop_on_graph(graph_matrix: scipy.sparse.csr_matrix, label_dist
     labeled_arr = y_static[labeled]
     label_distributions = label_distributions.copy()
     l_previous = None
+    # based on sklearn's BaseLabelPropagation
     for n_iter in range(max_iter):
         if n_iter != 0 and np.abs(label_distributions - l_previous).sum() < tol:  # did not change
             break  # end the loop, finished
@@ -141,6 +139,7 @@ def perform_edge_prop_on_graph(graph_matrix: scipy.sparse.csr_matrix, label_dist
         B = np.asarray(np.sum(step1, axis=0))  # sum aggregates the data into nodes
         # expand for data on edges, average of the 2 nodes
         mat = (edge_exists.multiply(B) + edge_exists.multiply(B.T)) / 2.0  # weird to keep sparsity
+        # clip overflowing values
         mat[mat > 1.0] = 1.0
         mat[mat < -1.0] = -1.0
         mat[labeled] = labeled_arr  # keep original labeled edges

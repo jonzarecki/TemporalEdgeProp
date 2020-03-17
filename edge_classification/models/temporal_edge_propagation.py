@@ -75,7 +75,7 @@ class TemporalGraphEdgePropagation(GraphEdgePropagation):
         :param g: The graph
         :return: returns a pointer to self
         """
-        path = EDGEPROP_BASE_DIR + "models/temporal_edge_prop/" + str(hash(tuple([itm[1] for itm in g.edge_labels]))) + ".bin"
+        path = f"{EDGEPROP_BASE_DIR}/{str(hash(tuple([itm[1] for itm in g.edge_labels])))}.bin"
         if os.path.isfile(path):
             with open(path, 'rb') as f:
                 self.edge_prop_results = pickle.load(f)
