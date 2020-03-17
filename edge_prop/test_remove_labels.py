@@ -1,8 +1,8 @@
 from unittest import TestCase
 import networkx as nx
 
-from edge_classification.data_preperation import remove_labels
-from edge_classification.graph_wrappers.binary_labeled_graph import BinaryLabeledGraph
+from edge_prop.data_preperation import remove_labels
+from edge_prop.graph_wrappers.binary_labeled_graph import BinaryLabeledGraph
 
 
 class TestRemove_labels(TestCase):

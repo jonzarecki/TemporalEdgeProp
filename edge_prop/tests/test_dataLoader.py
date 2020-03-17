@@ -1,7 +1,7 @@
 from unittest import TestCase
 
-from edge_classification.data_loader import DataLoader
-from edge_classification.graph_wrappers.binary_labeled_graph import BinaryLabeledGraph
+from edge_prop.data_loader import DataLoader
+from edge_prop.models import BinaryLabeledGraph
 
 
 class TestDataLoader(TestCase):

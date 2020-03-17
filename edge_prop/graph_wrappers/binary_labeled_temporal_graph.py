@@ -1,11 +1,10 @@
 from typing import Tuple
-
 import numpy as np
 import networkx as nx
-from edge_classification.graph_wrappers.binary_labeled_graph import BinaryLabeledGraph
-from edge_classification.graph_wrappers.temporal_graph import TemporalGraph
 
-AGG_TIMES_LIST_ATTR = "agg_times_list"
+from edge_prop.graph_wrappers import BinaryLabeledGraph
+from edge_prop.graph_wrappers import TemporalGraph
+from edge_prop.constants import AGG_TIMES_LIST_ATTR
 
 
 class BinaryLabeledTemporalGraph(BinaryLabeledGraph, TemporalGraph):

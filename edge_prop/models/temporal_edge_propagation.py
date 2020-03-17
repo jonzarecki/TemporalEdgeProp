@@ -9,13 +9,11 @@ import networkx as nx
 import numpy as np
 from sklearn.preprocessing import minmax_scale
 
-from edge_classification.graph_wrappers.binary_labeled_graph import BinaryLabeledGraph
-from edge_classification.graph_wrappers.binary_labeled_temporal_graph import BinaryLabeledTemporalGraph
-from edge_classification.graph_wrappers.temporal_graph import TemporalGraph
-from .edge_propagation import GraphEdgePropagation, initialize_distributions, perform_edge_prop_on_graph, \
-    EDGEPROP_BASE_DIR
+from edge_prop.graph_wrappers import BinaryLabeledTemporalGraph, TemporalGraph
+from edge_prop.models import GraphEdgePropagation
+from edge_prop.common.utils import initialize_distributions, perform_edge_prop_on_graph, bulk_calc_temporal_edge_prop
 
-DECAYED_TIME_WEIGHT = 'time_weight'
+from edge_prop.constants import DECAYED_TIME_WEIGHT, EDGEPROP_BASE_DIR
 
 
 class TemporalGraphEdgePropagation(GraphEdgePropagation):
@@ -154,35 +152,4 @@ class TemporalGraphEdgePropagation(GraphEdgePropagation):
 
         return results
 
-def bulk_calc_temporal_edge_prop(items_in_test: list, agg_g: BinaryLabeledGraph, g_edge_times_dict: dict,
-                                 g_edge_idx_to_agg_edge: dict) -> list:
-    """
-    Used to calculate the TEP alg' for a bulk set of test edges
-    :param items_in_test: The items we want to calculate TEP on in (edge_idx, edge) format
-    :param agg_g: The aggregated graph object as calculated by build_aggregated_graph()
-    :param g_edge_times_dict: dict that maps between edges and their time attribute
-    :param g_edge_idx_to_agg_edge: dict that maps between an edge to it's agg edge (in agg_g)
-    :return: the predictions from the TEP on the test edges in (edge_idx, pred) format
-    """
-    results = []
-    # initialize distributions
-    agg_label_distributions, agg_edge_exists, agg_labeled, agg_y_static = initialize_distributions(agg_g)
 
-    for i, edge in items_in_test:
-        TemporalGraph.build_decayed_edge_weights(agg_g, reference_time=g_edge_times_dict[edge],
-                                                 dec_time_attr=DECAYED_TIME_WEIGHT)
-
-        # actual graph construction
-        agg_graph_matrix = - nx.normalized_laplacian_matrix(agg_g.g_nx, nodelist=agg_g.node_order,
-                                                            weight=DECAYED_TIME_WEIGHT)
-        agg_graph_matrix.setdiag(0)
-
-        # run edge-prop
-        agg_label_distributions = agg_y_static.tocsr(copy=True)  # don't use same label distribution for diff edges
-        agg_label_distributions = perform_edge_prop_on_graph(agg_graph_matrix, agg_label_distributions,
-                                                             agg_edge_exists, agg_labeled, agg_y_static)
-
-        inst_pred = agg_label_distributions[tuple(agg_g.node_to_idx[node] for node in g_edge_idx_to_agg_edge[i])]
-        results.append((i, inst_pred))
-
-    return results

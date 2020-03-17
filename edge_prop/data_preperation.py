@@ -1,11 +1,11 @@
 from copy import deepcopy
 from typing import Tuple
 
-from edge_classification.graph_wrappers.base_graph import BaseGraph
+from edge_prop.graph_wrappers.base_graph import BaseGraph
 import numpy as np
 import networkx as nx
 
-from edge_classification.graph_wrappers.binary_labeled_graph import BinaryLabeledGraph
+from edge_prop.graph_wrappers.binary_labeled_graph import BinaryLabeledGraph
 
 
 def remove_labels(graph: BinaryLabeledGraph, keep_labels_precent: float = 0.5) -> Tuple[
