@@ -24,7 +24,7 @@ class GraphEdgePropagation(BaseModel):
     """
     _variant = 'propagation'
 
-    def __init__(self, y_attr: str, max_iter=50, tol=1e-3):
+    def __init__(self, y_attr: str = 'label', max_iter=50, tol=1e-3):
         super(GraphEdgePropagation, self).__init__(y_attr, max_iter, tol)
 
     def predict(self):
