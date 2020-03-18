@@ -58,7 +58,7 @@ class DenseEdgeProp(BaseModel):
             Predictions for entire graph
 
         """
-        return self.edge_prop_results.max(axis=-1)
+        return self.edge_prop_results.argmax(axis=-1)
 
     def fit(self, g: BinaryLabeledGraph):
         """
