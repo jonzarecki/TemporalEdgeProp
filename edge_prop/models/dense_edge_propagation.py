@@ -58,7 +58,10 @@ class DenseEdgeProp(BaseModel):
             Predictions for entire graph
 
         """
-        return self.edge_prop_results.argmax(axis=-1)
+        results = np.ones_like(self.edge_prop_results[:,:,0]) * self.NO_LABEL
+        edge_exists = self.edge_prop_results.sum(axis=-1) != 0
+        results[edge_exists] = self.edge_prop_results.argmax(axis=-1)[edge_exists]
+        return results
 
     def fit(self, g: BinaryLabeledGraph):
         """
