@@ -10,7 +10,7 @@ class TestDataLoader(TestCase):
         self.data_loader = DataLoader(DATASET2PATH['epinions'])
 
     def test_load_data(self):
-        graph = self.data_loader.load_data()
+        graph, true_lables, test_indices = self.data_loader.load_data()
 
         self.assertIsInstance(graph, BinaryLabeledGraph)
         self.assertGreater(graph.n_nodes, 100)
