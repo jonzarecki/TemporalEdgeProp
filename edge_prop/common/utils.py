@@ -96,7 +96,7 @@ def bulk_calc_temporal_edge_prop(items_in_test: list, agg_g: BinaryLabeledGraph,
                                                  dec_time_attr=DECAYED_TIME_WEIGHT)
 
         # actual graph construction
-        agg_graph_matrix = - nx.normalized_laplacian_matrix(agg_g.g_nx, nodelist=agg_g.node_order,
+        agg_graph_matrix = - nx.normalized_laplacian_matrix(agg_g.graph_nx, nodelist=agg_g.node_order,
                                                             weight=DECAYED_TIME_WEIGHT)
         agg_graph_matrix.setdiag(0)
 

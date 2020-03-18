@@ -10,12 +10,15 @@ class DataLoader:
         self.path = path
         self.test_size = test_size
 
-    def load_data(self):
+    def load_data(self, trunc_nodes:int = None):
         graph = nx.read_edgelist(self.path, comments='#', data=[('label', int)])
+        if trunc_nodes is not None:
+            graph.remove_nodes_from(map(str, range(trunc_nodes, graph.number_of_nodes())))
 
         edge2label = nx.get_edge_attributes(graph, 'label')
         edges = list(edge2label.keys())
         true_lables = np.array(list(edge2label.values()))
+        true_lables[true_lables < 0] = true_lables.max() + 1
 
         indices = np.arange(len(true_lables))
         train_indices, test_indices = train_test_split(indices, test_size=self.test_size)

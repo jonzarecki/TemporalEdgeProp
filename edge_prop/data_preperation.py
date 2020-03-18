@@ -19,7 +19,7 @@ def remove_labels(graph: BinaryLabeledGraph, keep_labels_precent: float = 0.5) -
 
     new_labels = {edge: label * label_mask[i] for i, (edge, label) in enumerate(graph.edge_labels)}
 
-    new_graph = graph.g_nx.copy()
+    new_graph = graph.graph_nx.copy()
     nx.set_edge_attributes(new_graph, new_labels, graph.y_attr)
     binary_graph = BinaryLabeledGraph(new_graph, graph.y_attr)
 

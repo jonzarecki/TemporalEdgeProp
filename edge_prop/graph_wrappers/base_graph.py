@@ -15,7 +15,7 @@ class BaseGraph:
     """
 
     def __init__(self, g: nx.Graph, **kwargs):
-        self.g_nx = g
+        self.graph_nx = g
 
         self.node_order = sorted(g.nodes)
         self.n_nodes = g.number_of_nodes()

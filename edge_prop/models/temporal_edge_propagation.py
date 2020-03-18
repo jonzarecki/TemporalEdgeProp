@@ -104,7 +104,7 @@ class TemporalGraphEdgePropagation(GraphEdgePropagation):
         :param g: The graph
         :return: the list of predictions from in (edge_idx, pred) format
         """
-        items_in_test = [(i, e) for (i, e) in enumerate(g.edge_order) if g.g_nx.get_edge_data(*e)[self.in_test]]
+        items_in_test = [(i, e) for (i, e) in enumerate(g.edge_order) if g.graph_nx.get_edge_data(*e)[self.in_test]]
         agg_g, g_edge_idx_to_agg_edge = g.build_aggregated_graph()
         if self.is_parallel:
             func = partial(bulk_calc_temporal_edge_prop, agg_g=agg_g, g_edge_times_dict=g.edge_times_dict,
@@ -137,7 +137,7 @@ class TemporalGraphEdgePropagation(GraphEdgePropagation):
         TemporalGraph.build_decayed_edge_weights(agg_g, reference_time=max_edge_time, dec_time_attr=DECAYED_TIME_WEIGHT)
 
         # actual graph construction
-        agg_graph_matrix = - nx.normalized_laplacian_matrix(agg_g.g_nx, nodelist=agg_g.node_order,
+        agg_graph_matrix = - nx.normalized_laplacian_matrix(agg_g.graph_nx, nodelist=agg_g.node_order,
                                                             weight=DECAYED_TIME_WEIGHT)
         agg_graph_matrix.setdiag(0)
 
