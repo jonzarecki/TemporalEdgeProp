@@ -58,10 +58,17 @@ class DenseEdgeProp(BaseModel):
             Predictions for entire graph
 
         """
-        results = np.ones_like(self.edge_prop_results[:,:,0]) * self.NO_LABEL
-        edge_exists = self.edge_prop_results.sum(axis=-1) != 0
-        results[edge_exists] = self.edge_prop_results.argmax(axis=-1)[edge_exists]
+        results = np.zeros(self.graph.n_edges, dtype=np.int)  # will hold the results
+        for i, (u, v) in enumerate(self.graph.edge_order):
+            edge_idxs = self.graph.node_to_idx[u], self.graph.node_to_idx[v]
+            results[i] = self.edge_distributions[edge_idxs].argmax()
+        # results = np.ones_like(self.edge_distributions[:, :, 0]) * self.NO_LABEL
+        # edge_exists = self.edge_distributions.sum(axis=-1) != 0
+        # results[edge_exists] = self.edge_distributions.argmax(axis=-1)[edge_exists]
         return results
+
+    def predict_proba(self):
+        return self.edge_distributions
 
     def fit(self, g: BinaryLabeledGraph):
         """
@@ -73,18 +80,12 @@ class DenseEdgeProp(BaseModel):
         -------
         self : returns a pointer to self
         """
+        self.graph = g
         self._classes = self._get_classes(g)
         adj_mat = np.asarray(nx.adjacency_matrix(g.graph_nx).todense())
         y = self._create_y(g)
 
-        label_distributions = self._perform_edge_prop_on_graph(adj_mat, y, max_iter=self.max_iter, tol=self.tol)
-
-        # set the results
-        self.edge_prop_results = label_distributions
-        # self.edge_prop_results = np.zeros(g.n_edges)  # will hold the results
-        # for i, (u, v) in enumerate(g.edge_order):
-        #     edge_idxs = g.node_to_idx[u], g.node_to_idx[v]
-        #     self.edge_prop_results[i] = label_distributions[edge_idxs]
+        self.edge_distributions = self._perform_edge_prop_on_graph(adj_mat, y, max_iter=self.max_iter, tol=self.tol)
         return self
 
     def _get_classes(self, g: BinaryLabeledGraph) -> np.ndarray:
@@ -93,7 +94,7 @@ class DenseEdgeProp(BaseModel):
         return classes
 
     def _perform_edge_prop_on_graph(self, adj_mat: np.ndarray, y: np.ndarray, max_iter=50,
-                                    tol=1e-3) -> np.ndarray:
+                                    tol=1e-3, alpha:float = 1.0) -> np.ndarray:
         """
         Performs the EdgeProp algorithm on the given graph.
         returns the label distribution (|N|, |N|) matrix with scores between -1, 1 stating the calculated label distribution.
@@ -114,6 +115,8 @@ class DenseEdgeProp(BaseModel):
             mat[adj_mat != 0] = mat[adj_mat != 0] / np.sum(mat[adj_mat != 0], axis=-1, keepdims=True)
             mat[mat != mat] = 0
 
+            edge_exists = y.sum(axis=-1) > 0
+            mat[edge_exists] = y[edge_exists] * alpha + mat[edge_exists] * (1 - alpha)
             label_distributions = mat
         else:
             warnings.warn("max_iter was reached without convergence", category=ConvergenceWarning)

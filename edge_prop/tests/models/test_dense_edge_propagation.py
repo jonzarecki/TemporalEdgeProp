@@ -21,14 +21,12 @@ class TestDenseEdgeProp(TestCase):
 
     def test_fit(self):
         self.edge_prop_model.fit(self.graph)
-        self.assertIsNotNone(self.edge_prop_model.edge_prop_results)
-        self.assertEqual(self.edge_prop_model.edge_prop_results.sum(), self.graph.n_edges * 2)
+        self.assertIsNotNone(self.edge_prop_model.edge_distributions)
+        self.assertEqual(self.edge_prop_model.edge_distributions.sum(), self.graph.n_edges * 2)
 
     def test_predict(self):
         self.edge_prop_model.fit(self.graph)
         results = self.edge_prop_model.predict()
-        self.assertEqual((results != DenseEdgeProp.NO_LABEL).sum(), self.graph.n_edges * 2)
-        self.assertEqual(results[1,2], 1)
-        self.assertEqual(results[3,4], 2)
+        self.assertListEqual(list(results), list(self.true_labels))
 
 

@@ -28,7 +28,7 @@ class BaseModel(six.with_metaclass(ABCMeta), BaseEstimator, ClassifierMixin):
         self.y_attr = y_attr
         self.max_iter = max_iter
         self.tol = tol
-        self.edge_prop_results = None  # keeps results after run
+        self.edge_distributions = None  # keeps results after run
 
     def predict(self):
         """
