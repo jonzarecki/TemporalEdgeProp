@@ -1,9 +1,11 @@
-from abc import ABCMeta
+import abc
+from abc import ABCMeta, ABC
 
 import six
 from sklearn.base import BaseEstimator, ClassifierMixin
-
-from edge_prop.graph_wrappers import BaseGraph
+import numpy as np
+import networkx as nx
+from edge_prop.graph_wrappers import BaseGraph, BinaryLabeledGraph
 
 
 class BaseModel(six.with_metaclass(ABCMeta), BaseEstimator, ClassifierMixin):
@@ -23,12 +25,13 @@ class BaseModel(six.with_metaclass(ABCMeta), BaseEstimator, ClassifierMixin):
 
     """
     _variant = 'propagation'
+    NO_LABEL = -1
 
-    def __init__(self, y_attr: str, max_iter=50, tol=1e-3):
+    def __init__(self, y_attr: str, max_iter: int = 50, tol: float = 1e-3, alpha: float = 1):
         self.y_attr = y_attr
-        self.max_iter = max_iter
+        self.alpha = alpha
         self.tol = tol
-        self.edge_distributions = None  # keeps results after run
+        self.max_iter = max_iter
 
     def predict(self):
         """
@@ -43,12 +46,21 @@ class BaseModel(six.with_metaclass(ABCMeta), BaseEstimator, ClassifierMixin):
             Predictions for entire graph
 
         """
-        raise NotImplementedError
+        results = np.zeros(self.graph.n_edges, dtype=np.int)  # will hold the results
+        for i, (u, v) in enumerate(self.graph.edge_order):
+            edge_idxs = self.graph.node_to_idx[u], self.graph.node_to_idx[v]
+            results[i] = self.edge_distributions[edge_idxs].argmax()
+        # results = np.ones_like(self.edge_distributions[:, :, 0]) * self.NO_LABEL
+        # edge_exists = self.edge_distributions.sum(axis=-1) != 0
+        # results[edge_exists] = self.edge_distributions.argmax(axis=-1)[edge_exists]
+        return results
 
-    def fit(self, g: BaseGraph):
+    def predict_proba(self):
+        return self.edge_distributions
+
+    def fit(self, g: BinaryLabeledGraph):
         """
-        Fit the graph
-
+        Uses the laplacian matrix to act as affinity matrix for the label-prop alg'
         :param g: The graph
 
 
@@ -56,4 +68,34 @@ class BaseModel(six.with_metaclass(ABCMeta), BaseEstimator, ClassifierMixin):
         -------
         self : returns a pointer to self
         """
-        raise NotImplementedError
+        self.graph = g
+        self._classes = self._get_classes(g)
+        adj_mat = np.asarray(nx.adjacency_matrix(g.graph_nx).todense())
+        y = self._create_y(g)
+
+        self.edge_distributions = self._perform_edge_prop_on_graph(adj_mat, y, max_iter=self.max_iter, tol=self.tol)
+        return self
+
+    @abc.abstractmethod
+    def _perform_edge_prop_on_graph(self, adj_mat: np.ndarray, y: np.ndarray, max_iter=50,
+                                    tol=1e-3) -> np.ndarray:
+        """
+        Performs the EdgeProp algorithm on the given graph.
+        returns the label distribution (|N|, |N|) matrix with scores between -1, 1 stating the calculated label distribution.
+        """
+        pass
+
+    def _get_classes(self, g: BinaryLabeledGraph) -> np.ndarray:
+        classes = np.unique([label for (edge, label) in g.edge_labels])
+        classes = classes[classes != self.NO_LABEL]
+        return classes
+
+    def _create_y(self, g):
+        y = np.zeros((g.n_nodes, g.n_nodes, len(self._classes)))
+        for ((u, v), label) in g.edge_labels:
+            edge = g.node_to_idx[u], g.node_to_idx[v]
+            reverse_edge = tuple(reversed(edge))
+            if label != self.NO_LABEL:
+                y[edge][label] = 1
+                y[reverse_edge][label] = 1
+        return y
