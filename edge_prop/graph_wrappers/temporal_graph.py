@@ -59,7 +59,7 @@ class TemporalGraph(BaseGraph):
         for agg_e, g_idxs in agg_e_maps_to.items():
             # sum of decayed weights IMPORTANT ALGORITHMIC CHOICE
             edge_weight_dict[agg_e] = decayed_edge_times_in_order[g_idxs].sum()
-        nx.set_edge_attributes(agg_g.g_nx, edge_weight_dict, dec_time_attr)
+        nx.set_edge_attributes(agg_g.graph_nx, edge_weight_dict, dec_time_attr)
 
     def split_into_time_chunks(self, delta=timedelta(days=7), verbose=True) -> List[nx.MultiDiGraph]:
         """
@@ -80,7 +80,7 @@ class TemporalGraph(BaseGraph):
         for i in range(1, n_chunks+1):
             chunk_st, chunk_end = min_time + (i - 1) * delta, min_time + i * delta
             logging.info(f"{i}: st - {chunk_st}  end - {chunk_end}")
-            g = self.g_nx.edge_subgraph(filter(lambda e: chunk_st < self.edge_times_dict[e] < chunk_end, self.edge_order)).copy()
+            g = self.graph_nx.edge_subgraph(filter(lambda e: chunk_st < self.edge_times_dict[e] < chunk_end, self.edge_order)).copy()
             graphs.append(g)
 
         # same number of nodes, different edges

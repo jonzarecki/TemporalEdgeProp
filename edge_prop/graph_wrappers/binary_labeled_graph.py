@@ -17,7 +17,7 @@ class BinaryLabeledGraph(BaseGraph):
     """
 
     def __init__(self, g: nx.Graph, y_attr: str, **kwargs):
-        super(BinaryLabeledGraph, self).__init__(g, **kwargs)
+        super().__init__(g, **kwargs)
         self.y_attr = y_attr
 
         self.edge_label_dict = nx.get_edge_attributes(g, y_attr)
@@ -26,4 +26,3 @@ class BinaryLabeledGraph(BaseGraph):
         # construct a categorical distribution for classification only
         classes = np.unique([y for (e, y) in self.edge_labels])
         classes = classes[classes != 0]
-        assert -1 in classes and 1 in classes and len(classes) == 2, "support binary for now"
