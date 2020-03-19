@@ -8,6 +8,9 @@ import scipy
 
 import networkx as nx
 import numpy as np
+
+from edge_prop.models.edge_prop_utils import initialize_distributions
+
 np.set_printoptions(precision=3)
 import six
 from sklearn.base import BaseEstimator, ClassifierMixin
@@ -51,6 +54,8 @@ class DenseEdgeProp(BaseModel):
         D[D == 0] = 1
         edge_exists = y.sum(axis=-1) > 0
 
+        _, adj_mat_sparse, _, _ = initialize_distributions(self.graph)
+
         with tqdm(range(max_iter), desc='Fitting model', unit='iter') as pbar:
             for n_iter in pbar:
                 dif = np.inf if l_previous is None else np.abs(label_distributions - l_previous).sum()
@@ -58,7 +63,8 @@ class DenseEdgeProp(BaseModel):
                 if n_iter != 0 and dif < tol:  # did not change
                     break  # end the loop, finished
                 l_previous = label_distributions.copy()
-                B = np.sum(np.dot(adj_mat, label_distributions), axis=1)  # TODO: attention, was axis=0
+                # B = np.sum(np.dot(adj_mat, label_distributions), axis=1)  # TODO: attention, was axis=0
+                B = np.sum(safe_sparse_dot(adj_mat_sparse, label_distributions), axis=1)  # TODO: attention, was axis=0
 
                 mat = (B[:, np.newaxis, :] + B[np.newaxis, :, :]) / (D[:, np.newaxis] + D[np.newaxis, :])[:, :, np.newaxis]
 

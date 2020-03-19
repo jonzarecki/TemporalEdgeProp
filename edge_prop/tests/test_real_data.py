@@ -12,7 +12,7 @@ class TestDenseEdgeProp(TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         path = DATASET2PATH['slashdot']
-        cls.graph, cls.y_true, cls.test_indices = DataLoader(path, test_size=0.2).load_data(1_000)
+        cls.graph, cls.y_true, cls.test_indices = DataLoader(path, test_size=0.2).load_data(5_000)
         cls.y_test = cls.y_true[cls.test_indices]
 
     def test_baseline(self):
