@@ -49,13 +49,13 @@ class BaseModel(six.with_metaclass(ABCMeta), BaseEstimator, ClassifierMixin):
             Predictions for entire graph
 
         """
-        results = np.zeros(self.graph.n_edges, dtype=np.int)  # will hold the results
+        results = np.zeros((self.graph.n_edges, self.edge_distributions.shape[2]), dtype=np.int)  # will hold the results
         for i, (u, v) in enumerate(self.graph.edge_order):
             edge_idxs = self.graph.node_to_idx[u], self.graph.node_to_idx[v]
             dist = self.edge_distributions[edge_idxs]  # label distribution
-            if len(dist[dist == dist.max()]) > 1:
-                warnings.warn(f"edge {(u,v)} doesn't have a definitive max: {dist}", category=RuntimeWarning)
-            results[i] = dist.argmax()
+            # if len(dist[dist == dist.max()]) > 1:
+            #     warnings.warn(f"edge {(u, v)} doesn't have a definitive max: {dist}", category=RuntimeWarning)
+            results[i] = dist.argsort()[::-1]
         # results = np.ones_like(self.edge_distributions[:, :, 0]) * self.NO_LABEL
         # edge_exists = self.edge_distributions.sum(axis=-1) != 0
         # results[edge_exists] = self.edge_distributions.argmax(axis=-1)[edge_exists]
@@ -92,16 +92,17 @@ class BaseModel(six.with_metaclass(ABCMeta), BaseEstimator, ClassifierMixin):
         pass
 
     def _get_classes(self, g: BinaryLabeledGraph) -> np.ndarray:
-        classes = np.unique([label for (edge, label) in g.edge_labels])
+        classes = np.unique([label for _, y in g.edge_labels for label in y])
         classes = classes[classes != self.NO_LABEL]
         return classes
 
     def _create_y(self, g):
         y = np.zeros((g.n_nodes, g.n_nodes, len(self._classes)))
-        for ((u, v), label) in g.edge_labels:
+        for ((u, v), labels) in g.edge_labels:
             edge = g.node_to_idx[u], g.node_to_idx[v]
             reverse_edge = tuple(reversed(edge))
-            if label != self.NO_LABEL:
-                y[edge][label] = 1
-                y[reverse_edge][label] = 1
+            for label in labels:
+                if label != self.NO_LABEL:
+                    y[edge][label] = 1/len(labels)
+                    y[reverse_edge][label] = 1/len(labels)
         return y

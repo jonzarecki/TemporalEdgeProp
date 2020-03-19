@@ -22,7 +22,3 @@ class BinaryLabeledGraph(BaseGraph):
 
         self.edge_label_dict = nx.get_edge_attributes(g, y_attr)
         self.edge_labels = [(e, self.edge_label_dict[e]) for e in self.edge_order]
-        # label construction
-        # construct a categorical distribution for classification only
-        classes = np.unique([y for (e, y) in self.edge_labels])
-        classes = classes[classes != 0]
