@@ -38,17 +38,16 @@ class DenseBasline(BaseModel):
         # _, adj_mat_sparse, _, _ = initialize_distributions(self.graph)
         adj_mat_sparse = sparse.csr_matrix(A)
         l_previous = None
-        last_Y = np.sum(safe_sparse_dot(adj_mat_sparse, Y), axis=0)
+        last_Y = np.sum(safe_sparse_dot(adj_mat_sparse, Y), axis=1)
         mat_sum = np.sum(last_Y, axis=-1)[:, np.newaxis]
         mat_sum[mat_sum == 0] = 1
         last_Y = last_Y / mat_sum
-        y_nodes = last_Y.copy()
-        nodes_exists = y_nodes.sum(axis=-1) > 0
-
-        # last_Y[last_Y != last_Y] = 0
+        # y_nodes = last_Y.copy()
+        # nodes_exists = y_nodes.sum(axis=-1) > 0
 
         D = np.sum(A, axis=0)
         D[D == 0] = 1
+        mD = D[:, np.newaxis]
 
         with tqdm(range(max_iter), desc='Fitting model', unit='iter') as pbar:
 
@@ -59,11 +58,10 @@ class DenseBasline(BaseModel):
                     break  # end the loop, finished
                 l_previous = last_Y.copy()
 
-                # B = np.dot(A, last_Y)
                 B = safe_sparse_dot(adj_mat_sparse, last_Y)
-                last_Y = B / D[:, np.newaxis]
+                last_Y = B / mD
                 # save original labels
-                last_Y[nodes_exists] = y_nodes[nodes_exists] * self.alpha + last_Y[nodes_exists] * (1 - self.alpha)
+                # last_Y[nodes_exists] = y_nodes[nodes_exists] * self.alpha + last_Y[nodes_exists] * (1 - self.alpha)
 
         #     last_Y=last_Y[:,np.newaxis,:]*last_Y[np.newaxis,:,:]
         last_Y = last_Y[:, np.newaxis, :] + last_Y[np.newaxis, :, :]
@@ -74,8 +72,8 @@ class DenseBasline(BaseModel):
         # last_Y[last_Y != last_Y] = 0
 
         # save original labels
-        edge_exists = y.sum(axis=-1) > 0
-        last_Y[edge_exists] = y[edge_exists] * self.alpha + last_Y[edge_exists] * (1 - self.alpha)
+        # edge_exists = y.sum(axis=-1) > 0
+        # last_Y[edge_exists] = y[edge_exists] * self.alpha + last_Y[edge_exists] * (1 - self.alpha)
 
         #
         # label_distributions = y.copy()

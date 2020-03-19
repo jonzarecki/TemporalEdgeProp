@@ -26,7 +26,8 @@ dependencies:
 - holoviews
 
 - pip:
-    - quit()
+#    - quit()  ?
+    - sparse
     - panel
     - argparse
     - nbclean

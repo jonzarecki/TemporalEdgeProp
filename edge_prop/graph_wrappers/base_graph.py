@@ -1,5 +1,7 @@
 import networkx as nx
 import numpy as np
+from sparse import COO
+
 
 class BaseGraph:
     """
@@ -28,5 +30,10 @@ class BaseGraph:
         self.agg_e_maps_to = None
         self.edge_timestamp_in_order = None
 
-    def adjacency_matrix(self):
-        return np.asarray(nx.adjacency_matrix(self.graph_nx, nodelist=self.node_order).todense(), dtype=bool)
+    def adjacency_matrix(self, sparse=True):
+        sadj_mat = nx.adjacency_matrix(self.graph_nx, nodelist=self.node_order)
+
+        if not sparse:
+            return np.asarray(sadj_mat.todense(), dtype=bool)
+        else:
+            return COO.from_scipy_sparse(sadj_mat)
