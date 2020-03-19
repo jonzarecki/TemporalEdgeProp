@@ -9,7 +9,6 @@ import scipy
 import networkx as nx
 import numpy as np
 from scipy import sparse
-from sparse import COO
 
 from edge_prop.models.edge_prop_utils import initialize_distributions
 
@@ -42,7 +41,7 @@ class DenseEdgeProp(BaseModel):
             Convergence tolerance: threshold to consider the system at a steady state
 
     """
-    def _perform_edge_prop_on_graph(self, adj_mat: COO, y: COO, max_iter=100,
+    def _perform_edge_prop_on_graph(self, adj_mat: np.ndarray, y: np.ndarray, max_iter=100,
                                     tol=1e-1) -> np.ndarray:
         """
         Performs the EdgeProp algorithm on the given graph.
@@ -52,13 +51,12 @@ class DenseEdgeProp(BaseModel):
 
         label_distributions = y.copy()
         l_previous = None
-        D = np.sum(adj_mat, axis=0).todense()
+        D = np.sum(adj_mat, axis=0)
         D[D == 0] = 1
-        mD = (D[:, np.newaxis] + D[np.newaxis, :])[:, :, np.newaxis]
         edge_exists = y.sum(axis=-1) > 0
 
         # _, adj_mat_sparse, _, _ = initialize_distributions(self.graph)
-        # adj_mat_sparse = sparse.csr_matrix(adj_mat)
+        adj_mat_sparse = sparse.csr_matrix(adj_mat)
 
 
         with tqdm(range(max_iter), desc='Fitting model', unit='iter') as pbar:
@@ -69,28 +67,17 @@ class DenseEdgeProp(BaseModel):
                     break  # end the loop, finished
                 l_previous = label_distributions.copy()
                 # B = np.sum(np.dot(adj_mat, label_distributions), axis=1)  # TODO: attention, was axis=0
-                # B = np.sum(safe_sparse_dot(adj_mat_sparse, label_distributions), axis=1)  # TODO: attention, was axis=0
-                B = adj_mat.dot(label_distributions).sum(axis=1)  # TODO: attention, was axis=0
+                B = np.sum(safe_sparse_dot(adj_mat_sparse, label_distributions), axis=1)  # TODO: attention, was axis=0
 
-                mat = np.multiply(adj_mat[:, :, np.newaxis], B) + np.multiply(adj_mat[:, np.newaxis, :], B.T).transpose([0, 2, 1])
-                mat /= mD
+                mat = (B[:, np.newaxis, :] + B[np.newaxis, :, :]) / (D[:, np.newaxis] + D[np.newaxis, :])[:, :, np.newaxis]
 
-                # mat = (B[:, np.newaxis, :] + B[np.newaxis, :, :]) / (D[:, np.newaxis] + D[np.newaxis, :])[:, :, np.newaxis]
-
-                mat_sum = np.sum(mat, axis=-1, keepdims=True)
-                mat_sum.fill_value = np.float64(1.0)
-                mat = mat / mat_sum
-
-
-
-                # mat[adj_mat == 0] = 0
-                # mat_sum = np.sum(mat[adj_mat != 0], axis=-1, keepdims=True)
-                # mat_sum[mat_sum == 0] = 1
-                # mat[adj_mat != 0] = mat[adj_mat != 0] / mat_sum
+                mat[adj_mat == 0] = 0
+                mat_sum = np.sum(mat[adj_mat != 0], axis=-1, keepdims=True)
+                mat_sum[mat_sum == 0] = 1
+                mat[adj_mat != 0] = mat[adj_mat != 0] / mat_sum
 
                 # save original labels
-                mat = y * self.alpha + mat * (1 - self.alpha)
-                # mat[edge_exists] = y[edge_exists] * self.alpha + mat[edge_exists] * (1 - self.alpha)
+                mat[edge_exists] = y[edge_exists] * self.alpha + mat[edge_exists] * (1 - self.alpha)
                 label_distributions = mat
             else:
                 warnings.warn("max_iter was reached without convergence", category=ConvergenceWarning)

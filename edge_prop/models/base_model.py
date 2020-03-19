@@ -52,7 +52,7 @@ class BaseModel(six.with_metaclass(ABCMeta), BaseEstimator, ClassifierMixin):
         results = np.zeros(self.graph.n_edges, dtype=np.int)  # will hold the results
         for i, (u, v) in enumerate(self.graph.edge_order):
             edge_idxs = self.graph.node_to_idx[u], self.graph.node_to_idx[v]
-            dist = self.edge_distributions[edge_idxs].todense()  # label distribution
+            dist = self.edge_distributions[edge_idxs]  # label distribution
             if len(dist[dist == dist.max()]) > 1:
                 warnings.warn(f"edge {(u,v)} doesn't have a definitive max: {dist}", category=RuntimeWarning)
             results[i] = dist.argmax()

@@ -25,6 +25,8 @@ class SparseEdgeProp(SparseBaseModel):
         label_distributions = y.copy()
         l_previous = None
         D = adj_mat.sum(axis=0).todense()
+        assert D.astype(np.uint16).max() == D.max()
+        D = D.astype(np.uint16)
         D[D == 0] = 1
         mD = (D[:, np.newaxis] + D[np.newaxis, :])[:, :, np.newaxis]
 
