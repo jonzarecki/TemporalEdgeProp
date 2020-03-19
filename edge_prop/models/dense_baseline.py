@@ -1,6 +1,7 @@
 import os
 
 import numpy as np
+from scipy import sparse
 from sklearn.utils.extmath import safe_sparse_dot
 from tqdm import tqdm
 
@@ -34,7 +35,8 @@ class DenseBasline(BaseModel):
         """
         A = adj_mat
         Y = y
-        _, adj_mat_sparse, _, _ = initialize_distributions(self.graph)
+        # _, adj_mat_sparse, _, _ = initialize_distributions(self.graph)
+        adj_mat_sparse = sparse.csr_matrix(A)
         l_previous = None
         last_Y = np.sum(safe_sparse_dot(adj_mat_sparse, Y), axis=0)
         mat_sum = np.sum(last_Y, axis=-1)[:, np.newaxis]

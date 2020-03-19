@@ -8,6 +8,7 @@ import scipy
 
 import networkx as nx
 import numpy as np
+from scipy import sparse
 
 from edge_prop.models.edge_prop_utils import initialize_distributions
 
@@ -54,7 +55,9 @@ class DenseEdgeProp(BaseModel):
         D[D == 0] = 1
         edge_exists = y.sum(axis=-1) > 0
 
-        _, adj_mat_sparse, _, _ = initialize_distributions(self.graph)
+        # _, adj_mat_sparse, _, _ = initialize_distributions(self.graph)
+        adj_mat_sparse = sparse.csr_matrix(adj_mat)
+
 
         with tqdm(range(max_iter), desc='Fitting model', unit='iter') as pbar:
             for n_iter in pbar:
