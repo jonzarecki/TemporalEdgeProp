@@ -39,7 +39,7 @@ class TestDenseEdgeProp(TestCase):
         g.add_edge(3, 5, label=DenseEdgeProp.NO_LABEL)
         graph = BinaryLabeledGraph(g, 'label')
         print(graph.edge_order)
-        true_labels = np.array([1, 1, 0, 0, 1])
+        true_labels = np.array([1, 1, 0, 0, 0])
         edge_prop_model = DenseEdgeProp(y_attr='label')
         edge_prop_model.fit(graph)
         results = edge_prop_model.predict()
