@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import networkx as nx
 import numpy as np
 
@@ -21,27 +23,29 @@ class TemporalGraphLabelPropagation(BaseLabelPropagation):
         return self.X_
 
     @staticmethod
-    def decay_function(times_list: np.ndarray, measure_from: float) -> np.ndarray:
+    def decay_function(times_list: np.ndarray) -> np.ndarray:
         """
-        Calculates the decayed time function for all times in $timeslist in comparison with measure_from timestamp
+        Calculates the decayed time function for all times in $timeslist in comparison with now
+        TODO: now is weird
         Args:
             times_list: list of timestamps in np array
-            measure_from: timestamp to start measuring from
 
         Returns:
             Decayed scores for all times in $times_list
         """
         alpha = 1.
         beta = -0.0005
-        return alpha * np.exp(beta * np.abs(measure_from - times_list) / (60**2))
+        return alpha * np.exp(beta * np.abs(datetime.now() - times_list) / (60**2))
 
     def fit(self, g: nx.Graph, y):
         """
         Uses the laplacian matrix to acy as affinity matrix for the label-prop algorithm
         Args:
             g: The graph in nx format
-            y: the edge label we expect
-
+            #TODO: y is weird, should be an node attribute
+            y : array_like, shape = [n_samples]
+                n_labeled_samples (unlabeled points are marked as -1)
+                All unlabeled samples will be transductively assigned labels
         Returns:
             self
         """

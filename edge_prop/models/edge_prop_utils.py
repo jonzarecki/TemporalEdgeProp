@@ -12,7 +12,7 @@ from edge_prop.constants import DECAYED_TIME_WEIGHT
 
 def perform_edge_prop_on_graph(graph_matrix: sparse.csr_matrix, label_distributions: sparse.csr_matrix,
                                edge_exists: sparse.csr_matrix, labeled: sparse.dok_matrix,
-                               y_static: sparse.csr_matrix, max_iter=50, tol=1e-3) -> sparse.csr_matrix:
+                               y_static: sparse.csr_matrix, max_iter=500, tol=1e-3) -> sparse.csr_matrix:
     """
     Performs the EdgeProp algorithm on the given graph.
     returns the label distribution (|N|, |N|) matrix with scores between -1, 1 stating the calculated label distribution.

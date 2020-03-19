@@ -10,10 +10,10 @@ import numpy as np
 from sklearn.preprocessing import minmax_scale
 
 from edge_prop.graph_wrappers import BinaryLabeledTemporalGraph, TemporalGraph
-from edge_prop.models import GraphEdgePropagation
 from edge_prop.models.edge_prop_utils import initialize_distributions, perform_edge_prop_on_graph, bulk_calc_temporal_edge_prop
 
 from edge_prop.constants import DECAYED_TIME_WEIGHT, EDGEPROP_BASE_DIR
+from edge_prop.models.edge_propagation import GraphEdgePropagation
 
 
 class TemporalGraphEdgePropagation(GraphEdgePropagation):

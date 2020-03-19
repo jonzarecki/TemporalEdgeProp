@@ -1,4 +1,5 @@
 import abc
+import warnings
 from abc import ABCMeta, ABC
 
 import six
@@ -49,6 +50,9 @@ class BaseModel(six.with_metaclass(ABCMeta), BaseEstimator, ClassifierMixin):
         results = np.zeros(self.graph.n_edges, dtype=np.int)  # will hold the results
         for i, (u, v) in enumerate(self.graph.edge_order):
             edge_idxs = self.graph.node_to_idx[u], self.graph.node_to_idx[v]
+            dist = self.edge_distributions[edge_idxs]
+            if len(dist[dist == dist.max()]) > 1:
+                warnings.warn(f"edge {(u,v)} doesn't have a definitive max: {dist}", category=RuntimeWarning)
             results[i] = self.edge_distributions[edge_idxs].argmax()
         # results = np.ones_like(self.edge_distributions[:, :, 0]) * self.NO_LABEL
         # edge_exists = self.edge_distributions.sum(axis=-1) != 0
@@ -70,15 +74,15 @@ class BaseModel(six.with_metaclass(ABCMeta), BaseEstimator, ClassifierMixin):
         """
         self.graph = g
         self._classes = self._get_classes(g)
-        adj_mat = np.asarray(nx.adjacency_matrix(g.graph_nx).todense())
+        adj_mat = g.adjacency_matrix()
         y = self._create_y(g)
 
         self.edge_distributions = self._perform_edge_prop_on_graph(adj_mat, y, max_iter=self.max_iter, tol=self.tol)
         return self
 
     @abc.abstractmethod
-    def _perform_edge_prop_on_graph(self, adj_mat: np.ndarray, y: np.ndarray, max_iter=50,
-                                    tol=1e-3) -> np.ndarray:
+    def _perform_edge_prop_on_graph(self, adj_mat: np.ndarray, y: np.ndarray, max_iter=100,
+                                    tol=1e-1) -> np.ndarray:
         """
         Performs the EdgeProp algorithm on the given graph.
         returns the label distribution (|N|, |N|) matrix with scores between -1, 1 stating the calculated label distribution.

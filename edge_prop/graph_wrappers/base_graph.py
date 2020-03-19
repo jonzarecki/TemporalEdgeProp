@@ -1,5 +1,5 @@
 import networkx as nx
-
+import numpy as np
 
 class BaseGraph:
     """
@@ -27,3 +27,6 @@ class BaseGraph:
         # only used when this is an aggregated graph from BinaryLabeledTemporalGraph.build_aggregated_graph()
         self.agg_e_maps_to = None
         self.edge_timestamp_in_order = None
+
+    def adjacency_matrix(self):
+        return np.asarray(nx.adjacency_matrix(self.graph_nx, nodelist=self.node_order).todense(), dtype=bool)
