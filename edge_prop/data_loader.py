@@ -7,13 +7,15 @@ from edge_prop.models.dense_edge_propagation import DenseEdgeProp
 
 
 class DataLoader:
-    def __init__(self, path: str, test_size: float = 0.2, no_label: int = DenseEdgeProp.NO_LABEL):
+    def __init__(self, path: str, test_size: float = 0.2, no_label: int = DenseEdgeProp.NO_LABEL,
+                 dtype_tuples=[('label', int)]):
         self.path = path
         self.test_size = test_size
         self.no_label = no_label
+        self.dtype_tuples = dtype_tuples
 
     def load_data(self, trunc_nodes: int = None):
-        graph = nx.read_edgelist(self.path, comments='#', data=[('label', int)])
+        graph = nx.read_edgelist(self.path, comments='#', data=self.dtype_tuples)
         if trunc_nodes is not None:
             graph.remove_nodes_from(map(str, range(trunc_nodes, graph.number_of_nodes())))
 
