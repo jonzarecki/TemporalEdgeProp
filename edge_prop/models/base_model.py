@@ -84,7 +84,7 @@ class BaseModel(six.with_metaclass(ABCMeta), BaseEstimator, ClassifierMixin):
 
     @abc.abstractmethod
     def _perform_edge_prop_on_graph(self, adj_mat: np.ndarray, y: np.ndarray, max_iter=100,
-                                    tol=1e-1) -> COO:
+                                    tol=1e-1) -> np.ndarray:
         """
         Performs the EdgeProp algorithm on the given graph.
         returns the label distribution (|N|, |N|) matrix with scores between -1, 1 stating the calculated label distribution.
@@ -97,13 +97,11 @@ class BaseModel(six.with_metaclass(ABCMeta), BaseEstimator, ClassifierMixin):
         return classes
 
     def _create_y(self, g):
-        # y = np.zeros((g.n_nodes, g.n_nodes, len(self._classes)), dtype=np.float16)
-        values = {}
+        y = np.zeros((g.n_nodes, g.n_nodes, len(self._classes)))
         for ((u, v), label) in g.edge_labels:
             edge = g.node_to_idx[u], g.node_to_idx[v]
+            reverse_edge = tuple(reversed(edge))
             if label != self.NO_LABEL:
-                values[(edge[0], edge[1], label)] = 1
-                values[(edge[1], edge[0], label)] = 1
-        y = DOK((g.n_nodes, g.n_nodes, len(self._classes)), values, dtype=np.float32)
-        print("fin create_y")
-        return y.to_coo()
+                y[edge][label] = 1
+                y[reverse_edge][label] = 1
+        return y

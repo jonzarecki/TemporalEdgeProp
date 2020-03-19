@@ -102,7 +102,6 @@ class SparseBaseModel(six.with_metaclass(ABCMeta), BaseEstimator, ClassifierMixi
 
 
     def _create_y(self, g):
-        # y = np.zeros((g.n_nodes, g.n_nodes, len(self._classes)), dtype=np.float16)
         values = {}
         for ((u, v), label) in g.edge_labels:
             edge = g.node_to_idx[u], g.node_to_idx[v]
@@ -110,5 +109,4 @@ class SparseBaseModel(six.with_metaclass(ABCMeta), BaseEstimator, ClassifierMixi
                 values[(edge[0], edge[1], label)] = 1
                 values[(edge[1], edge[0], label)] = 1
         y = DOK((g.n_nodes, g.n_nodes, len(self._classes)), values, dtype=np.float32)
-        print("fin create_y")
         return y.to_coo()
