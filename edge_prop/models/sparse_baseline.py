@@ -33,7 +33,7 @@ class SparseBasline(SparseBaseModel):
         # D[D == 0] = 1
         # mD = D[:, np.newaxis]
 
-        D = np.sum(adj_mat, axis=0)
+        D = np.sum(adj_mat, axis=0).todense()
         D[D == 0] = 1
         mD = D[:, np.newaxis]
 
