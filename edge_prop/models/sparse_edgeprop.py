@@ -28,7 +28,7 @@ class SparseEdgeProp(SparseBaseModel):
         assert D.astype(np.uint16).max() == D.max()
         D = D.astype(np.uint16)
         D[D == 0] = 1
-        mD = (D[:, np.newaxis] + D[np.newaxis, :])[:, :, np.newaxis]
+        # mD = (D[:, np.newaxis] + D[np.newaxis, :])[:, :, np.newaxis]
 
         with tqdm(range(max_iter), desc='Fitting model', unit='iter') as pbar:
             for n_iter in pbar:
@@ -37,10 +37,11 @@ class SparseEdgeProp(SparseBaseModel):
                 if n_iter != 0 and dif < tol:  # did not change
                     break  # end the loop, finished
                 l_previous = label_distributions.copy()
-                B = adj_mat.dot(label_distributions).sum(axis=1)  # TODO: attention, was axis=0
-
+                # B = adj_mat.dot(label_distributions).sum(axis=1)  # TODO: attention, was axis=0
+                B = adj_mat.dot(label_distributions.sum(axis=0))  # same-effect, much faster
+                B /= D[:, np.newaxis]  # new, need to check equality
                 mat = np.multiply(adj_mat[:, :, np.newaxis], B) + np.multiply(adj_mat[:, np.newaxis, :], B.T).transpose([0, 2, 1])
-                mat /= mD
+                # mat /= mD
 
                 mat_sum = np.sum(mat, axis=-1, keepdims=True)
                 mat_sum.fill_value = np.float64(1.0)

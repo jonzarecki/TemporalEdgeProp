@@ -19,7 +19,7 @@ class SparseBasline(SparseBaseModel):
         Performs the EdgeProp algorithm on the given graph.
         returns the label distribution (|N|, |N|) matrix with scores between -1, 1 stating the calculated label distribution.
         """
-        A = adj_mat.todense()
+        # A = adj_mat.todense()
         Y = y
 
         l_previous = None
@@ -33,7 +33,7 @@ class SparseBasline(SparseBaseModel):
         # D[D == 0] = 1
         # mD = D[:, np.newaxis]
 
-        D = np.sum(A, axis=0)
+        D = np.sum(adj_mat, axis=0)
         D[D == 0] = 1
         mD = D[:, np.newaxis]
 

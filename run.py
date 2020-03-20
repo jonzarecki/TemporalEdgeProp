@@ -21,7 +21,7 @@ results = {}
 for alpha, test_size in product(alphas, test_sizes):
     print(f"test_size={test_size}, alpha={alpha}")
     # create dataset
-    graph, y_true, test_indices = DataLoader(path, test_size=test_size).load_data(50_000)
+    graph, y_true, test_indices = DataLoader(path, test_size=test_size).load_data()
     y_test = y_true[test_indices]
 
     print("Calculating edgeprop:")
