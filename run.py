@@ -4,6 +4,7 @@ from itertools import product
 from sklearn.metrics import accuracy_score
 from tqdm import tqdm
 
+from edge_prop.common.metrics import mean_rank, hit_at_k
 from edge_prop.constants import DATASET2PATH
 from edge_prop.data_loader import DataLoader
 from edge_prop.models.dense_baseline import DenseBasline
@@ -11,7 +12,7 @@ from edge_prop.models.dense_edge_propagation import DenseEdgeProp
 from edge_prop.models.sparse_baseline import SparseBasline
 from edge_prop.models.sparse_edgeprop import SparseEdgeProp
 
-alphas = [0, 0.5, 1]  #[0, 0.5, 0.8, 1]
+alphas = [0, 0.5, 1]  # [0, 0.5, 0.8, 1]
 test_sizes = [0.25, 0.5, 0.75]
 
 path = DATASET2PATH['epinions']
@@ -29,20 +30,23 @@ for alpha, test_size in product(alphas, test_sizes):
     edge_prop = SparseEdgeProp(graph.y_attr, max_iter=100, alpha=alpha)
     edge_prop.fit(graph)
     y_pred = edge_prop.predict()[test_indices]
-    our_accuracy = accuracy_score(y_test, y_pred)
-    print(f"took {(time.time() - st) / 60}. acc - {our_accuracy}")
-
+    our_metrics = {f'hit_at_{k}': round(hit_at_k(y_test, y_pred, k=k), 3) for k in [1, 5, 10]}
+    our_metrics.update({'mean_rank': round(mean_rank(y_test, y_pred), 3)})
+    our_metrics.update({'accuracy': round(accuracy_score(y_test, y_pred), 3)})
+    print(f"took {(time.time() - st) / 60}. {our_metrics}")
 
     print("Calculating baseline:")
     st = time.time()
     baseline = SparseBasline(graph.y_attr, max_iter=100, alpha=alpha)
     baseline.fit(graph)
     y_pred = baseline.predict()[test_indices]
-    baseline_accuracy = accuracy_score(y_test, y_pred)
-    print(f"took {(time.time() - st) / 60}. acc - {baseline_accuracy}")
+    baseline_metrics = {f'hit_at_{k}': round(hit_at_k(y_test, y_pred, k=k), 3) for k in [1, 5, 10]}
+    baseline_metrics.update({'mean_rank': round(mean_rank(y_test, y_pred), 3)})
+    baseline_metrics.update({'accuracy': round(accuracy_score(y_test, y_pred), 3)})
+    print(f"took {(time.time() - st) / 60}. {baseline_metrics}")
 
-    results[(alpha, test_size)] = (our_accuracy, baseline_accuracy)
+    results[(alpha, test_size)] = (our_metrics, baseline_metrics)
 
-for (alpha, test_size), (new_acc, baseline_acc) in results.items():
+for (alpha, test_size), (our_metrics, baseline_metrics) in results.items():
     print(
-        f"alpha={alpha}, test_size={test_size}, \t Baseline: {round(baseline_acc, 3)}\t New Model:{round(new_acc, 3)}")
+        f"alpha={alpha}, test_size={test_size}, \t Baseline: {baseline_metrics} \t New Model: {our_metrics}")
