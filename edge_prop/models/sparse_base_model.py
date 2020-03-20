@@ -55,7 +55,7 @@ class SparseBaseModel(six.with_metaclass(ABCMeta), BaseEstimator, ClassifierMixi
             dist = self.edge_distributions[edge_idxs].todense()  # label distribution
             # if len(dist[dist == dist.max()]) > 1:
             #     warnings.warn(f"edge {(u, v)} doesn't have a definitive max: {dist}", category=RuntimeWarning)
-            results[i] = dist.argsort()[::-1]
+            results[i] = dist#.argmax()
         # results = np.ones_like(self.edge_distributions[:, :, 0]) * self.NO_LABEL
         # edge_exists = self.edge_distributions.sum(axis=-1) != 0
         # results[edge_exists] = self.edge_distributions.argmax(axis=-1)[edge_exists]
