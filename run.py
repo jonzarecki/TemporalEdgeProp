@@ -15,10 +15,10 @@ from edge_prop.models.sparse_edgeprop import SparseEdgeProp
 alphas = [0, 0.5, 1]  # [0, 0.5, 0.8, 1]
 test_sizes = [0.25, 0.5, 0.75]
 
-path = DATASET2PATH['epinions']
+path = DATASET2PATH['aminer_l']
 dtype_tuples = [('label', int), ('time', str)]
 results = {}
-
+print(path)
 for alpha, test_size in product(alphas, test_sizes):
     print(f"test_size={test_size}, alpha={alpha}")
     # create dataset
