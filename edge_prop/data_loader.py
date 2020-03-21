@@ -1,13 +1,12 @@
 from os.path import join
 import numpy as np
-import pandas as pd
 import networkx as nx
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MultiLabelBinarizer
 
-from edge_prop.graph_wrappers.binary_labeled_graph import BinaryLabeledGraph
+from edge_prop.graph_wrappers import BaseGraph
 from edge_prop.models.dense_edge_propagation import DenseEdgeProp
-
+from edge_prop.constants import LABEL_GT, LABEL_TRAIN
 
 class DataLoader:
     def __init__(self, path: str, test_size: float = 0.2, no_label: int = DenseEdgeProp.NO_LABEL,
@@ -19,58 +18,46 @@ class DataLoader:
 
     def load_data(self, trunc_nodes: int = None):
         if 'aminer' in self.path:
-            sources_train, destinations_train, labels_train, _, _ = self._get_triples(join(self.path, 'train.txt'))
-            edges_train = list(zip(sources_train, destinations_train))
-            labels_train = [[y] if not isinstance(y, list) else y for y in labels_train]
-            edges_train = edges_train[:1000] #TODO: remove only first 1000 edges
-            labels_train = labels_train[:1000] #TODO: remove only first 1000 edges
-            sources_test, destinations_test, labels_test, _, _ = self._get_triples(join(self.path, 'valid.txt'))
-            edges_test = list(zip(sources_test, destinations_test))
-            labels_test = [[y] if not isinstance(y, list) else y for y in labels_test]
-            edges_test = edges_test[:1000] #TODO: remove only first 1000 edges
-            labels_test = labels_test[:1000] #TODO: remove only first 1000 edges
-
-
-            edges = np.concatenate([edges_train, edges_test])
-            graph = nx.from_edgelist(edges)
+            edges_train, labels_train = self._get_triples(join(self.path, 'train.txt'))
+            edges_train = edges_train[:1000]  # TODO: remove only first 1000 edges
+            labels_train = labels_train[:1000]  # TODO: remove only first 1000 edges
+            edges_test, labels_test = self._get_triples(join(self.path, 'valid.txt'))
+            edges_test = edges_test[:1000]  # TODO: remove only first 1000 edges
+            labels_test = labels_test[:1000]  # TODO: remove only first 1000 edges
+            graph = nx.from_edgelist(np.concatenate([edges_train, edges_test]))
 
             edge2label = {}
             edge2label.update({edge: label for edge, label in zip(edges_train, labels_train)})
             edge2label.update({edge: label for edge, label in zip(edges_test, labels_test)})
-            nx.set_edge_attributes(graph, edge2label, 'label')
+            nx.set_edge_attributes(graph, edge2label, LABEL_GT)
 
-            edge2label = nx.get_edge_attributes(graph, 'label')
-            edges = list(edge2label.keys())
-            true_lables = np.array(list(edge2label.values()))
-            test_indices = [i for i, edge in enumerate(edges) if edge in edges_test]
-
-            edge2label = {}
-            edge2label.update({edge: label for edge, label in zip(edges_train, labels_train)})
-            edge2label.update({edge: [self.no_label] for edge, label in zip(edges_test, labels_test)})
-            nx.set_edge_attributes(graph, edge2label, 'label')
-        else:
+            edge2label.update({edge: [self.no_label] for edge in edges_test})
+            nx.set_edge_attributes(graph, edge2label, LABEL_TRAIN)
+        elif 'epinions' in self.path:
             graph = nx.read_edgelist(self.path, comments='#', data=self.dtype_tuples)
             if trunc_nodes is not None:
                 graph.remove_nodes_from(map(str, range(trunc_nodes, graph.number_of_nodes())))
 
-            edge2label = nx.get_edge_attributes(graph, 'label')
-            edges = list(edge2label.keys())
-            true_lables = np.array([list(edge2label.values())]).T
-            if len(np.unique(true_lables)) == 2:  # binary case
-                true_lables[true_lables < 0] = 0
+            edge2label = nx.get_edge_attributes(graph, LABEL_GT)
+            edge2label = {edge: [0 if label < 0 else label] for edge, label in edge2label.items()}
+            nx.set_edge_attributes(graph, edge2label, LABEL_GT)
 
-            indices = np.arange(len(true_lables))
-            train_indices, test_indices = train_test_split(indices, test_size=self.test_size)
+            _, test_edges = train_test_split(edge2label.keys(), test_size=self.test_size)
+            edge2label.update({edge: [self.no_label] for i, edge in test_edges})
+            nx.set_edge_attributes(graph, edge2label, LABEL_TRAIN)
+        else:
+            raise Exception('No such dataset exists')
 
-            edge2label = {}
-            edge2label.update({edges[i]: true_lables[i] for i in train_indices})
-            edge2label.update({edges[i]: [self.no_label] for i in test_indices})
-            nx.set_edge_attributes(graph, edge2label, 'label')
+        g = BaseGraph(graph)
+        test_indices = np.array([i for i, (_, label) in enumerate(g.get_edge_attributes(LABEL_TRAIN)) if label == [self.no_label]])
 
-        true_lables = MultiLabelBinarizer().fit_transform(true_lables)
-        binary_labeled_graph = BinaryLabeledGraph(graph, 'label')
+        true_labels = np.array([label for _, label in g.get_edge_attributes(LABEL_GT)])
+        y_test = MultiLabelBinarizer().fit_transform(true_labels)
+        for cur_y_test, true_label in zip(y_test, true_labels):
+            if not (sum(cur_y_test[true_label]) == len(true_label) == sum(cur_y_test)):
+                raise Exception('Classes got binarized not in the right order')
 
-        return binary_labeled_graph, true_lables, test_indices
+        return g, y_test, test_indices
 
     @staticmethod
     def _get_triples(path):
@@ -98,4 +85,8 @@ class DataLoader:
             tailSet[values[1]].add(values[0])
             relationList.append(values[2:])
         f.close()
-        return headList, tailList, relationList, headSet, tailSet
+
+        edges = list(zip(headList, tailList))
+        relationList = [[label] if not isinstance(label, list) else label for label in relationList]
+
+        return edges, relationList

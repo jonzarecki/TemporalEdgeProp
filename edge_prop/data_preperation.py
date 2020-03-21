@@ -8,14 +8,14 @@ import networkx as nx
 from edge_prop.graph_wrappers.binary_labeled_graph import BinaryLabeledGraph
 
 
-def remove_labels(graph: BinaryLabeledGraph, keep_labels_precent: float = 0.5) -> Tuple[
+def remove_labels(graph: BaseGraph, label, keep_labels_precent: float = 0.5) -> Tuple[
     BinaryLabeledGraph, np.ndarray, np.ndarray]:
     keep_label_indices = np.random.choice(range(graph.n_edges), size=int(keep_labels_precent * graph.n_edges),
                                           replace=False)
     label_mask = np.zeros(graph.n_edges, dtype=np.int)
     label_mask[keep_label_indices] = 1
 
-    y_true = graph.edge_labels
+    y_true = graph.get_edge_attributes(label)
 
     new_labels = {edge: label * label_mask[i] for i, (edge, label) in enumerate(graph.edge_labels)}
 

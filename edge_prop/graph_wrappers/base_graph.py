@@ -37,3 +37,8 @@ class BaseGraph:
             return np.asarray(sadj_mat.todense(), dtype=bool)
         else:
             return COO.from_scipy_sparse(sadj_mat)
+
+    def get_edge_attributes(self, label):
+        edge_label_dict = nx.get_edge_attributes(self.graph_nx, label)
+        edge_labels = [(e, edge_label_dict[e]) for e in self.edge_order]
+        return edge_labels

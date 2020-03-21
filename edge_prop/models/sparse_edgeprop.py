@@ -15,7 +15,7 @@ EDGEPROP_BASE_DIR = os.path.dirname(__file__) + "/"
 
 class SparseEdgeProp(SparseBaseModel):
     def _perform_edge_prop_on_graph(self, adj_mat: COO, y: COO, max_iter=100,
-                                    tol=1e-1) -> np.ndarray:
+                                    tol=1e-5) -> np.ndarray:
         """
         Performs the EdgeProp algorithm on the given graph.
         returns the label distribution (|N|, |N|) matrix with scores between -1, 1 stating the calculated label distribution.
@@ -40,7 +40,7 @@ class SparseEdgeProp(SparseBaseModel):
                 # B = adj_mat.dot(label_distributions).sum(axis=1)  # TODO: attention, was axis=0
                 B = adj_mat.dot(label_distributions.sum(axis=0))  # same-effect, much faster
                 B /= D[:, np.newaxis]  # new, need to check equality
-                mat = np.multiply(adj_mat[:, :, np.newaxis], B) + np.multiply(adj_mat[:, np.newaxis, :], B.T).transpose([0, 2, 1])
+                mat = np.multiply(adj_mat[:, :, np.newaxis], B[:, np.newaxis, :]) + np.multiply(adj_mat[:, :, np.newaxis], B[np.newaxis, :, :])
                 # mat /= mD
 
                 mat_sum = np.sum(mat, axis=-1, keepdims=True)
