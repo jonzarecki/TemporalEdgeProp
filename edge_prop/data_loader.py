@@ -17,8 +17,8 @@ class DataLoader:
     def load_data(self, trunc_nodes: int = None):
         if 'aminer' in self.path:
             graph = self._load_aminer(self.path)
-        elif 'epinions' in self.path:
-            graph = self._load_epinions(self.path, trunc_nodes)
+        elif 'epinions' in self.path or 'Slashdot' in self.path:
+            graph = self._load_konect_dataset(self.path, trunc_nodes)
         else:
             raise Exception('No such dataset exists')
 
@@ -36,7 +36,7 @@ class DataLoader:
 
         return g, y_test, test_indices
 
-    def _load_epinions(self, path, trunc_nodes):
+    def _load_konect_dataset(self, path, trunc_nodes):
         graph = nx.read_edgelist(path, comments='#', data=self.dtype_tuples)
         if trunc_nodes is not None:
             graph.remove_nodes_from(map(str, range(trunc_nodes, graph.number_of_nodes())))
