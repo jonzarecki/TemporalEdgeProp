@@ -48,7 +48,9 @@ class SparseEdgeProp(SparseBaseModel):
                 mat = mat / mat_sum
 
                 # save original labels
-                mat = y * self.alpha + mat * (1 - self.alpha)
+                not_original_edge = y.sum(axis=-1, keepdims=True) == 0
+                original_edges = y * self.alpha + (1- not_original_edge) * mat * (1 - self.alpha)
+                mat = original_edges + not_original_edge * mat
                 label_distributions = mat
             else:
                 warnings.warn("max_iter was reached without convergence", category=ConvergenceWarning)
