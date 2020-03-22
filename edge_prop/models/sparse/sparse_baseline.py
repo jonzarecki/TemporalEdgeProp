@@ -1,20 +1,18 @@
 import os
 
 import numpy as np
-from scipy import sparse
-from sklearn.utils.extmath import safe_sparse_dot
-from tqdm import tqdm
+from tqdm.autonotebook import tqdm
+from sparse import COO
 
-from edge_prop.models.base_model import BaseModel
-from edge_prop.models.edge_prop_utils import initialize_distributions
-from edge_prop.models.sparse_base_model import SparseBaseModel
+from edge_prop.models import SparseBaseModel
+
 
 EDGEPROP_BASE_DIR = os.path.dirname(__file__) + "/"
 
 
-class SparseBasline(SparseBaseModel):
+class SparseBaseline(SparseBaseModel):
     def _perform_edge_prop_on_graph(self, adj_mat: np.ndarray, y: np.ndarray, max_iter=50,
-                                    tol=1e-3) -> np.ndarray:
+                                    tol=1e-5) -> np.ndarray:
         """
         Performs the EdgeProp algorithm on the given graph.
         returns the label distribution (|N|, |N|) matrix with scores between -1, 1 stating the calculated label distribution.
@@ -49,7 +47,7 @@ class SparseBasline(SparseBaseModel):
                 B = adj_mat.dot(last_Y)
                 last_Y = B / mD
 
-        from sparse import COO
+
         last_Y = COO(last_Y)
         last_Y_edges = np.multiply(adj_mat[:, :, np.newaxis], last_Y[:, np.newaxis, :]) + \
                        np.multiply(adj_mat[:, :, np.newaxis], last_Y[np.newaxis, :, :]).transpose([1, 0, 2])

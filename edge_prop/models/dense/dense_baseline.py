@@ -5,8 +5,7 @@ from scipy import sparse
 from sklearn.utils.extmath import safe_sparse_dot
 from tqdm import tqdm
 
-from edge_prop.models.base_model import BaseModel
-from edge_prop.models.edge_prop_utils import initialize_distributions
+from edge_prop.models import BaseModel
 
 EDGEPROP_BASE_DIR = os.path.dirname(__file__) + "/"
 

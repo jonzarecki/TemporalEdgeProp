@@ -1,14 +1,14 @@
 import abc
 import warnings
-from abc import ABCMeta, ABC
+from abc import ABCMeta
 
 import six
 from sklearn.base import BaseEstimator, ClassifierMixin
 import numpy as np
-import networkx as nx
 from sparse import DOK, COO
 
-from edge_prop.graph_wrappers import BaseGraph, BinaryLabeledGraph
+from edge_prop.graph_wrappers import BaseGraph
+from edge_prop.constants import NO_LABEL
 
 
 class BaseModel(six.with_metaclass(ABCMeta), BaseEstimator, ClassifierMixin):
@@ -18,8 +18,6 @@ class BaseModel(six.with_metaclass(ABCMeta), BaseEstimator, ClassifierMixin):
     EXPECTS non-multi edge graphs
     Parameters
     ------------
-    y_attr: The edge attr containing the label
-
     max_iter: integer
             Change maximum number of iterations allowed
 
@@ -28,15 +26,15 @@ class BaseModel(six.with_metaclass(ABCMeta), BaseEstimator, ClassifierMixin):
 
     """
     _variant = 'propagation'
-    NO_LABEL = -1
 
-    def __init__(self, y_attr: str, max_iter: int = 50, tol: float = 1e-3, alpha: float = 1):
-        self.y_attr = y_attr
+    def __init__(self, max_iter: int = 50, tol: float = 1e-5, alpha: float = 1):
         self.alpha = alpha
         self.tol = tol
         self.max_iter = max_iter
 
-    def predict(self):
+        self.sparse = False
+
+    def predict(self, indices=None):
         """
         Predict labels across all edges
 
@@ -49,22 +47,42 @@ class BaseModel(six.with_metaclass(ABCMeta), BaseEstimator, ClassifierMixin):
             Predictions for entire graph
 
         """
-        results = np.zeros((self.graph.n_edges, self.edge_distributions.shape[2]), dtype=np.int)  # will hold the results
-        for i, (u, v) in enumerate(self.graph.edge_order):
-            edge_idxs = self.graph.node_to_idx[u], self.graph.node_to_idx[v]
-            dist = self.edge_distributions[edge_idxs]  # label distribution
-            # if len(dist[dist == dist.max()]) > 1:
-            #     warnings.warn(f"edge {(u, v)} doesn't have a definitive max: {dist}", category=RuntimeWarning)
-            results[i] = dist#.argmax()
-        # results = np.ones_like(self.edge_distributions[:, :, 0]) * self.NO_LABEL
+        if indices is None:
+            indices = range(self.graph.n_edges)
+
+        results = []
+        for i in indices:
+            u, v = self.graph.edge_order[i]
+            dist = self.get_edge_distributions(u, v)  # label distribution
+            if len(dist[dist == dist.max()]) > 1:
+                warnings.warn(f"edge {(u, v)} doesn't have a definitive max: {dist}", category=RuntimeWarning)
+            results.append(dist.argmax())
+        results = np.array(results, dtype=np.int)
+        # results = np.ones_like(self.edge_distributions[:, :, 0]) * NO_LABEL
         # edge_exists = self.edge_distributions.sum(axis=-1) != 0
         # results[edge_exists] = self.edge_distributions.argmax(axis=-1)[edge_exists]
         return results
 
-    def predict_proba(self):
-        return self.edge_distributions
+    def predict_proba(self, indices=None):
+        if indices is None:
+            indices = range(self.graph.n_edges)
 
-    def fit(self, g: BinaryLabeledGraph):
+        results = []
+        for i in indices:
+            u, v = self.graph.edge_order[i]
+            results.append(self.get_edge_distributions(u, v))
+        results = np.array(results)
+
+        return results
+
+    def get_edge_distributions(self, u, v):
+        u_index, v_index = self.graph.node_to_idx[u], self.graph.node_to_idx[v]
+        if self.sparse:
+            return self.edge_distributions[u_index, v_index].todense()
+        else:
+            return self.edge_distributions[u_index, v_index]
+
+    def fit(self, g: BaseGraph, label):
         """
         Uses the laplacian matrix to act as affinity matrix for the label-prop alg'
         :param g: The graph
@@ -75,34 +93,40 @@ class BaseModel(six.with_metaclass(ABCMeta), BaseEstimator, ClassifierMixin):
         self : returns a pointer to self
         """
         self.graph = g
-        self._classes = self._get_classes(g)
-        adj_mat = g.adjacency_matrix(sparse=False)
-        y = self._create_y(g)
+        adj_mat = g.adjacency_matrix(sparse=self.sparse)
+        y = self._create_y(g, label)
 
         self.edge_distributions = self._perform_edge_prop_on_graph(adj_mat, y, max_iter=self.max_iter, tol=self.tol)
+
         return self
 
     @abc.abstractmethod
     def _perform_edge_prop_on_graph(self, adj_mat: np.ndarray, y: np.ndarray, max_iter=100,
-                                    tol=1e-1) -> np.ndarray:
+                                    tol=1e-1) -> COO:
         """
         Performs the EdgeProp algorithm on the given graph.
         returns the label distribution (|N|, |N|) matrix with scores between -1, 1 stating the calculated label distribution.
         """
         pass
 
-    def _get_classes(self, g: BinaryLabeledGraph) -> np.ndarray:
-        classes = np.unique([label for _, y in g.edge_labels for label in y])
-        classes = classes[classes != self.NO_LABEL]
+    @staticmethod
+    def _get_classes(g: BaseGraph, label) -> np.ndarray:
+        edge_labels = g.get_edge_attributes(label)
+        classes = np.unique([label for _, y in edge_labels for label in y])
+        classes = classes[classes != NO_LABEL]
         return classes
 
-    def _create_y(self, g):
-        y = np.zeros((g.n_nodes, g.n_nodes, len(self._classes)))
-        for ((u, v), labels) in g.edge_labels:
+    @staticmethod
+    def _create_y(g, label):
+        classes = BaseModel._get_classes(g, label)
+        edge_labels = g.get_edge_attributes(label)
+
+        y = np.zeros((g.n_nodes, g.n_nodes, len(classes)))
+        for ((u, v), labels) in edge_labels:
             edge = g.node_to_idx[u], g.node_to_idx[v]
             reverse_edge = tuple(reversed(edge))
             for label in labels:
-                if label != self.NO_LABEL:
+                if label != NO_LABEL:
                     y[edge][label] = 1/len(labels)
                     y[reverse_edge][label] = 1/len(labels)
         return y
