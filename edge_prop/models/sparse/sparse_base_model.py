@@ -2,6 +2,7 @@
 import numpy as np
 from sparse import DOK, COO
 
+from edge_prop.constants import NO_LABEL
 from edge_prop.models import BaseModel
 
 
@@ -34,7 +35,7 @@ class SparseBaseModel(BaseModel):
         for ((u, v), labels) in edge_labels:
             edge = g.node_to_idx[u], g.node_to_idx[v]
             for label in labels:
-                if label != BaseModel.NO_LABEL:
+                if label != NO_LABEL:
                     values[(edge[0], edge[1], label)] = 1/len(labels)
                     values[(edge[1], edge[0], label)] = 1/len(labels)
 
