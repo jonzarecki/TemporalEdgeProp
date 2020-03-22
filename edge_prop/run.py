@@ -5,13 +5,13 @@ from edge_prop.common.metrics import mean_rank, hit_at_k
 from edge_prop.constants import DATASET2PATH
 from edge_prop.data_loader import DataLoader
 from edge_prop.models import SparseBaseline, SparseEdgeProp
-from edge_prop.constants import LABEL_TRAIN
+from edge_prop.constants import LABEL_GT, LABEL_TRAIN
 
 alphas = [0, 0.5, 1]  # [0, 0.5, 0.8, 1]
 test_sizes = [0.25, 0.5, 0.75]
 
 path = DATASET2PATH['aminer_s']
-dtype_tuples = [('label', int), ('time', str)]
+dtype_tuples = [(LABEL_GT, int), ('time', str)]
 results = {}
 print(path)
 for alpha, test_size in product(alphas, test_sizes):

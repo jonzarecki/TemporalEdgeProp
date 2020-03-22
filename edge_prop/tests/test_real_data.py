@@ -7,6 +7,7 @@ import random
 from edge_prop.constants import DATASET2PATH
 from edge_prop.data_loader import DataLoader
 from edge_prop.models import DenseBasline, DenseEdgeProp, SparseBaseline, SparseEdgeProp
+from edge_prop.constants import LABEL_TRAIN
 
 
 class TestDenseEdgeProp(TestCase):
@@ -20,12 +21,12 @@ class TestDenseEdgeProp(TestCase):
 
     def test_baseline_dense(self):
         baseline = DenseBasline(max_iter=1000, alpha=0.8, tol=1e-3)
-        baseline.fit(self.graph, 'label')
+        baseline.fit(self.graph, LABEL_TRAIN)
         y_pred = baseline.predict()[self.test_indices]
         print(f"Accuracy: {accuracy_score(self.y_test, y_pred)}")
 
         baseline = SparseBaseline(max_iter=1000, alpha=0.8, tol=1e-3)
-        baseline.fit(self.graph, 'label')
+        baseline.fit(self.graph, LABEL_TRAIN)
         y_pred = baseline.predict()[self.test_indices]
         print(f"Accuracy: {accuracy_score(self.y_test, y_pred)}")
 
@@ -38,13 +39,13 @@ class TestDenseEdgeProp(TestCase):
 
     def test_edgeprop(self):
         edge_prop = DenseEdgeProp(max_iter=1000, alpha=0.8, tol=1e-3)
-        edge_prop.fit(self.graph, 'label')
+        edge_prop.fit(self.graph, LABEL_TRAIN)
 
         y_pred = edge_prop.predict()[self.test_indices]
         print(f"Accuracy: {accuracy_score(self.y_test, y_pred)}")
 
         edge_prop = SparseEdgeProp(max_iter=1000, alpha=0.8, tol=1e-3)
-        edge_prop.fit(self.graph, 'label')
+        edge_prop.fit(self.graph, LABEL_TRAIN)
 
         y_pred = edge_prop.predict()[self.test_indices]
         print(f"Accuracy: {accuracy_score(self.y_test, y_pred)}")

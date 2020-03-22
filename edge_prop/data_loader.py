@@ -9,7 +9,7 @@ from edge_prop.constants import LABEL_GT, LABEL_TRAIN, NO_LABEL
 
 
 class DataLoader:
-    def __init__(self, path: str, test_size: float = 0.2, dtype_tuples=[('label', int)]):
+    def __init__(self, path: str, test_size: float = 0.2, dtype_tuples=[(LABEL_GT, int)]):
         self.path = path
         self.test_size = test_size
         self.dtype_tuples = dtype_tuples

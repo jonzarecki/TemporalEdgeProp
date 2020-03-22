@@ -81,4 +81,3 @@ class TestEdgePropAlgs(unittest.TestCase):
     @staticmethod
     def days_from_now(days: int) -> timedelta:
         return datetime.now() - timedelta(days=days)
-
