@@ -5,7 +5,6 @@ import networkx as nx
 from datetime import datetime, timedelta
 
 from edge_prop.common.graph_label_prop.label_prop import GraphLabelPropagation
-from edge_prop.graph_wrappers import BinaryLabeledGraph
 
 
 class TestLabelProp(TestCase):

@@ -1,15 +1,10 @@
 import time
 from itertools import product
 
-from sklearn.metrics import accuracy_score, f1_score
-
 from edge_prop.common.metrics import mean_rank, hit_at_k
 from edge_prop.constants import DATASET2PATH
 from edge_prop.data_loader import DataLoader
-from edge_prop.models.dense_baseline import DenseBasline
-from edge_prop.models.dense_edge_propagation import DenseEdgeProp
-from edge_prop.models.sparse_baseline import SparseBasline
-from edge_prop.models.sparse_edgeprop import SparseEdgeProp
+from edge_prop.models import SparseBaseline, SparseEdgeProp
 from edge_prop.constants import LABEL_TRAIN
 
 alphas = [0, 0.5, 1]  # [0, 0.5, 0.8, 1]
@@ -32,12 +27,12 @@ for alpha, test_size in product(alphas, test_sizes):
     y_pred = edge_prop.predict_proba(test_indices)
     our_metrics = {f'hit_at_{k}': round(hit_at_k(y_test, y_pred, k=k), 3) for k in [1, 5, 10]}
     our_metrics.update({'mean_rank': round(mean_rank(y_test, y_pred), 3)})
-    # our_metrics.update({'accuracy': round(f1_score(y_test, y_pred), 3)})
+    # our_metrics.update({'accuracy': round(accuracy_score(y_test, y_pred), 3)})
     print(f"took {(time.time() - st) / 60}. {our_metrics}")
 
     print("Calculating baseline:")
     st = time.time()
-    baseline = SparseBasline(max_iter=100, alpha=alpha)
+    baseline = SparseBaseline(max_iter=100, alpha=alpha)
     baseline.fit(graph, LABEL_TRAIN)
     y_pred = baseline.predict_proba(test_indices)
     baseline_metrics = {f'hit_at_{k}': round(hit_at_k(y_test, y_pred, k=k), 3) for k in [1, 5, 10]}

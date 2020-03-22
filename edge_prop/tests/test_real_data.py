@@ -6,10 +6,7 @@ import random
 
 from edge_prop.constants import DATASET2PATH
 from edge_prop.data_loader import DataLoader
-from edge_prop.models.dense_baseline import DenseBasline
-from edge_prop.models.dense_edge_propagation import DenseEdgeProp
-from edge_prop.models.sparse_baseline import SparseBasline
-from edge_prop.models.sparse_edgeprop import SparseEdgeProp
+from edge_prop.models import DenseBasline, DenseEdgeProp, SparseBaseline, SparseEdgeProp
 
 
 class TestDenseEdgeProp(TestCase):
@@ -22,13 +19,13 @@ class TestDenseEdgeProp(TestCase):
         cls.y_test = cls.y_true[cls.test_indices]
 
     def test_baseline_dense(self):
-        baseline = DenseBasline(self.graph.y_attr, max_iter=1000, alpha=0.8, tol=1e-3)
-        baseline.fit(self.graph)
+        baseline = DenseBasline(max_iter=1000, alpha=0.8, tol=1e-3)
+        baseline.fit(self.graph, 'label')
         y_pred = baseline.predict()[self.test_indices]
         print(f"Accuracy: {accuracy_score(self.y_test, y_pred)}")
 
-        baseline = SparseBasline(self.graph.y_attr, max_iter=1000, alpha=0.8, tol=1e-3)
-        baseline.fit(self.graph)
+        baseline = SparseBaseline(max_iter=1000, alpha=0.8, tol=1e-3)
+        baseline.fit(self.graph, 'label')
         y_pred = baseline.predict()[self.test_indices]
         print(f"Accuracy: {accuracy_score(self.y_test, y_pred)}")
 
@@ -40,14 +37,14 @@ class TestDenseEdgeProp(TestCase):
 
 
     def test_edgeprop(self):
-        edge_prop = DenseEdgeProp(self.graph.y_attr, max_iter=1000, alpha=0.8, tol=1e-3)
-        edge_prop.fit(self.graph)
+        edge_prop = DenseEdgeProp(max_iter=1000, alpha=0.8, tol=1e-3)
+        edge_prop.fit(self.graph, 'label')
 
         y_pred = edge_prop.predict()[self.test_indices]
         print(f"Accuracy: {accuracy_score(self.y_test, y_pred)}")
 
-        edge_prop = SparseEdgeProp(self.graph.y_attr, max_iter=1000, alpha=0.8, tol=1e-3)
-        edge_prop.fit(self.graph)
+        edge_prop = SparseEdgeProp(max_iter=1000, alpha=0.8, tol=1e-3)
+        edge_prop.fit(self.graph, 'label')
 
         y_pred = edge_prop.predict()[self.test_indices]
         print(f"Accuracy: {accuracy_score(self.y_test, y_pred)}")

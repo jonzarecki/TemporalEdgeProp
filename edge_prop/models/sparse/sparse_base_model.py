@@ -2,7 +2,7 @@
 import numpy as np
 from sparse import DOK, COO
 
-from edge_prop.models.base_model import BaseModel
+from edge_prop.models import BaseModel
 
 
 class SparseBaseModel(BaseModel):

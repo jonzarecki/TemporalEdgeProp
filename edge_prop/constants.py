@@ -9,6 +9,7 @@ AGG_TIMES_LIST_ATTR = "agg_times_list"
 LABEL_GT = 'label'
 LABEL_TRAIN = 'label_train'
 LABEL_PRED = 'label_pred'
+NO_LABEL = -1
 
 DATA_PATH = join(EDGEPROP_BASE_DIR, 'data')
 DATASET2PATH = {'epinions': join(DATA_PATH, 'soc-sign-epinions.txt'),

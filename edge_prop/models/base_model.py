@@ -8,6 +8,7 @@ import numpy as np
 from sparse import DOK, COO
 
 from edge_prop.graph_wrappers import BaseGraph
+from edge_prop.constants import NO_LABEL
 
 
 class BaseModel(six.with_metaclass(ABCMeta), BaseEstimator, ClassifierMixin):
@@ -25,7 +26,6 @@ class BaseModel(six.with_metaclass(ABCMeta), BaseEstimator, ClassifierMixin):
 
     """
     _variant = 'propagation'
-    NO_LABEL = -1
 
     def __init__(self, max_iter: int = 50, tol: float = 1e-5, alpha: float = 1):
         self.alpha = alpha
@@ -58,7 +58,7 @@ class BaseModel(six.with_metaclass(ABCMeta), BaseEstimator, ClassifierMixin):
                 warnings.warn(f"edge {(u, v)} doesn't have a definitive max: {dist}", category=RuntimeWarning)
             results.append(dist.argmax())
         results = np.array(results, dtype=np.int)
-        # results = np.ones_like(self.edge_distributions[:, :, 0]) * self.NO_LABEL
+        # results = np.ones_like(self.edge_distributions[:, :, 0]) * NO_LABEL
         # edge_exists = self.edge_distributions.sum(axis=-1) != 0
         # results[edge_exists] = self.edge_distributions.argmax(axis=-1)[edge_exists]
         return results
@@ -113,7 +113,7 @@ class BaseModel(six.with_metaclass(ABCMeta), BaseEstimator, ClassifierMixin):
     def _get_classes(g: BaseGraph, label) -> np.ndarray:
         edge_labels = g.get_edge_attributes(label)
         classes = np.unique([label for _, y in edge_labels for label in y])
-        classes = classes[classes != BaseModel.NO_LABEL]
+        classes = classes[classes != NO_LABEL]
         return classes
 
     @staticmethod
@@ -126,7 +126,7 @@ class BaseModel(six.with_metaclass(ABCMeta), BaseEstimator, ClassifierMixin):
             edge = g.node_to_idx[u], g.node_to_idx[v]
             reverse_edge = tuple(reversed(edge))
             for label in labels:
-                if label != BaseModel.NO_LABEL:
+                if label != NO_LABEL:
                     y[edge][label] = 1/len(labels)
                     y[reverse_edge][label] = 1/len(labels)
         return y

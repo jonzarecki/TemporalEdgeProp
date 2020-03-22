@@ -4,13 +4,13 @@ import numpy as np
 from tqdm.autonotebook import tqdm
 from sparse import COO
 
-from edge_prop.models.sparse_base_model import SparseBaseModel
+from edge_prop.models import SparseBaseModel
 
 
 EDGEPROP_BASE_DIR = os.path.dirname(__file__) + "/"
 
 
-class SparseBasline(SparseBaseModel):
+class SparseBaseline(SparseBaseModel):
     def _perform_edge_prop_on_graph(self, adj_mat: np.ndarray, y: np.ndarray, max_iter=50,
                                     tol=1e-5) -> np.ndarray:
         """

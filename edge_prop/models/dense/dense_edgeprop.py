@@ -1,26 +1,16 @@
 import gc
 import os
 import warnings
-from abc import ABCMeta
-from typing import Tuple, List
-
-import scipy
-
-import networkx as nx
 import numpy as np
 from scipy import sparse
 
-from edge_prop.models.edge_prop_utils import initialize_distributions
 
 np.set_printoptions(precision=3)
-import six
-from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.extmath import safe_sparse_dot
 from tqdm.autonotebook import tqdm
 
-from edge_prop.graph_wrappers import BinaryLabeledGraph
-from edge_prop.models.base_model import BaseModel
+from edge_prop.models import BaseModel
 
 EDGEPROP_BASE_DIR = os.path.dirname(__file__) + "/"
 

@@ -1,6 +1,5 @@
 import networkx as nx
 import numpy as np
-from sklearn.semi_supervised import LabelPropagation
 
 from sklearn.semi_supervised.label_propagation import BaseLabelPropagation
 

@@ -4,7 +4,7 @@ import warnings
 import numpy as np
 from sparse import COO
 
-from edge_prop.models.sparse_base_model import SparseBaseModel
+from edge_prop.models import SparseBaseModel
 
 np.set_printoptions(precision=3)
 from sklearn.exceptions import ConvergenceWarning
