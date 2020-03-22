@@ -43,8 +43,8 @@ class DataLoader:
         edge2label = nx.get_edge_attributes(graph, LABEL_GT)
         edge2label = {edge: [0 if label < 0 else label] for edge, label in edge2label.items()}
         nx.set_edge_attributes(graph, edge2label, LABEL_GT)
-        _, test_edges = train_test_split(edge2label.keys(), test_size=self.test_size)
-        edge2label.update({edge: [NO_LABEL] for i, edge in test_edges})
+        _, test_edges = train_test_split(list(edge2label.keys()), test_size=self.test_size)
+        edge2label.update({edge: [NO_LABEL] for edge in test_edges})
         nx.set_edge_attributes(graph, edge2label, LABEL_TRAIN)
         return graph
 
