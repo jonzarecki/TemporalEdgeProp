@@ -25,10 +25,10 @@ class SparseBaseModel(BaseModel):
         super(SparseBaseModel, self).__init__(max_iter, tol, alpha)
         self.sparse = True
 
-
-    @staticmethod
-    def _create_y(g, label):
-        classes = BaseModel._get_classes(g, label)
+    def _create_y(self, g, label):
+        classes = self._get_classes(g, label)
+        self.classes = classes
+        lbl2idx = {l:i for i, l in enumerate(self.classes)}
         edge_labels = g.get_edge_attributes(label)
 
         values = {}
@@ -36,8 +36,9 @@ class SparseBaseModel(BaseModel):
             edge = g.node_to_idx[u], g.node_to_idx[v]
             for label in labels:
                 if label != NO_LABEL:
-                    values[(edge[0], edge[1], label)] = 1/len(labels)
-                    values[(edge[1], edge[0], label)] = 1/len(labels)
+                    lbl_idx = lbl2idx[label]
+                    values[(edge[0], edge[1], lbl_idx)] = 1/len(labels)
+                    values[(edge[1], edge[0], lbl_idx)] = 1/len(labels)
 
         y = DOK((g.n_nodes, g.n_nodes, len(classes)), values, dtype=np.float32)
         return y.to_coo()

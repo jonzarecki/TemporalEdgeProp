@@ -23,9 +23,17 @@ class SparseBaseline(SparseBaseModel):
 
         l_previous = None
 
-        A = adj_mat.tocsr()
+        D = np.sum(adj_mat, axis=0)
+        D = D.todense()
+        D[D == 0] = 1
+        mD = D[:, np.newaxis]
+
+        # A = adj_mat.tocsr()
+        # s = adj_mat.sum(axis=0)
+        # s.fill_value = np.int64(1)
+        A = (adj_mat / mD).tocsr()  # norm rows
         print("starting init setup")
-        last_Y = A.dot(Y.sum(axis=0).todense())  # same as before, might be a bug
+        last_Y = Y.sum(axis=0).todense()  # same as before, might be a bug
         # last_Y = adj_mat.dot(Y).sum(axis=1).todense()  # TODO: axis 0 or 1 ?
         # last_Y = last_Y.todense()
         mat_sum = np.sum(last_Y, axis=-1)[:, np.newaxis]
@@ -34,10 +42,6 @@ class SparseBaseline(SparseBaseModel):
         # D = np.sum(adj_mat, axis=0).todense()
         # D[D == 0] = 1
         # mD = D[:, np.newaxis]
-        D = np.sum(A, axis=0)
-        D = np.asarray(D)[0]
-        D[D == 0] = 1
-        mD = D[:, np.newaxis]
 
         with tqdm(range(max_iter), desc='Fitting model', unit='iter') as pbar:
 
@@ -50,13 +54,19 @@ class SparseBaseline(SparseBaseModel):
 
                 # B = adj_mat.dot(last_Y)
                 B = A.dot(last_Y)
+                # as in paper
+                last_Y = B
+
+                continue
+                # below not specified in the paper
                 last_Y = B / mD
+                last_Y = last_Y / last_Y.sum(axis=1)[:, np.newaxis]
 
         st = time.time()
         print("starting expand to edge")
         last_Y = COO(last_Y)
         last_Y_edges = np.multiply(adj_mat[:, :, np.newaxis], last_Y[:, np.newaxis, :]) + \
-                       np.multiply(adj_mat[:, :, np.newaxis], last_Y[np.newaxis, :, :]).transpose([1, 0, 2])
+                       np.multiply(adj_mat[:, :, np.newaxis], last_Y[np.newaxis, :, :])
         print("starting norm")
         mat_sum = np.sum(last_Y_edges, axis=-1, keepdims=True)
         mat_sum.fill_value = np.float64(1.0)
