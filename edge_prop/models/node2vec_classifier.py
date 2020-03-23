@@ -8,7 +8,7 @@ from edge_prop.graph_wrappers import BaseGraph
 
 class Node2VecClassifier:
 
-    def __init__(self, n2v_kwargs={}, n2v_fit_kwargs={}):
+    def __init__(self, n2v_kwargs={}, n2v_fit_kwargs={}, max_iter=300, alpha = None):
         self.n2v_kwargs = n2v_kwargs
         self.n2v_fit_kwargs = n2v_fit_kwargs
         self.clf = LogisticRegression(multi_class='ovr')
@@ -17,9 +17,9 @@ class Node2VecClassifier:
         graph = g.graph_nx
 
         # fit node2vec
-        self.node2vec = Node2Vec(graph, **self.n2v_kwargs)
+        self.node2vec = Node2Vec(graph, workers = 4, num_walks = 100, **self.n2v_kwargs)
         self.node2vec = self.node2vec.fit(**self.n2v_fit_kwargs)
-        edge_vectors = [np.concatenate([self.node2vec.wv[u], self.node2vec.wv[v]]) for u, v in g.edge_order]
+        edge_vectors = [np.concatenate([self.node2vec.wv[str(u)], self.node2vec.wv[str(v)]]) for u, v in g.edge_order]
         self.edge_vectors = np.stack(edge_vectors)
 
         # extract the train set
