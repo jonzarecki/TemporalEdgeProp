@@ -54,9 +54,10 @@ class BaseModel(six.with_metaclass(ABCMeta), BaseEstimator, ClassifierMixin):
         for i in indices:
             u, v = self.graph.edge_order[i]
             dist = self.get_edge_distributions(u, v)  # label distribution
+            assert np.allclose(self.get_edge_distributions(u, v), self.get_edge_distributions(v, u)), "graphs are undirectional, shouldn't happen"
             if len(dist[dist == dist.max()]) > 1:
                 warnings.warn(f"edge {(u, v)} doesn't have a definitive max: {dist}", category=RuntimeWarning)
-            results.append(dist.argmax())
+            results.append(self.classes[dist.argmax()])  # returned index and not the class
         results = np.array(results, dtype=np.int)
         # results = np.ones_like(self.edge_distributions[:, :, 0]) * NO_LABEL
         # edge_exists = self.edge_distributions.sum(axis=-1) != 0
@@ -109,16 +110,15 @@ class BaseModel(six.with_metaclass(ABCMeta), BaseEstimator, ClassifierMixin):
         """
         pass
 
-    @staticmethod
-    def _get_classes(g: BaseGraph, label) -> np.ndarray:
+    def _get_classes(self, g: BaseGraph, label) -> np.ndarray:
         edge_labels = g.get_edge_attributes(label)
         classes = np.unique([label for _, y in edge_labels for label in y])
         classes = classes[classes != NO_LABEL]
         return classes
 
-    @staticmethod
-    def _create_y(g, label):
-        classes = BaseModel._get_classes(g, label)
+    def _create_y(self, g, label):
+        classes = self._get_classes(g, label)
+        self.classes = classes
         edge_labels = g.get_edge_attributes(label)
 
         y = np.zeros((g.n_nodes, g.n_nodes, len(classes)))

@@ -9,7 +9,7 @@ from edge_prop.data_loader import DataLoader
 from edge_prop.models import SparseBaseline, SparseEdgeProp
 from edge_prop.constants import LABEL_GT, LABEL_TRAIN
 
-data_name = 'aminer_s'#'epinions'#'aminer_s'
+data_name = 'slashdot'#'epinions'#'aminer_s'
 
 
 def get_expr_name(alpha, test_size, alg_cls):
@@ -32,7 +32,7 @@ def run_alg_on_data(alpha, test_size, alg_cls):
     print(expr_name)
     # create dataset
     path = DATASET2PATH[data_name]
-    graph, true_labels, test_indices = DataLoader(path, test_size=test_size).load_data(10000)  # node number doesn't work on aminer
+    graph, true_labels, test_indices = DataLoader(path, test_size=test_size).load_data(10_000)  # node number doesn't work on aminer
     y_test = true_labels[test_indices]
 
     print(f"Calculating {alg_cls.__name__}:")
@@ -43,17 +43,17 @@ def run_alg_on_data(alpha, test_size, alg_cls):
     metrics = {f'hit_at_{k}': round(hit_at_k(y_test, y_pred, k=k), 3) for k in [1, 5, 10]}
     metrics.update({'mean_rank': round(mean_rank(y_test, y_pred), 3)})
     # our_metrics.update({'accuracy': round(accuracy_score(y_test, y_pred), 3)})
-    print(f"took {(time.time() - st) / 60}. {metrics}")
+    print(f"took {int(time.time() - st) / 60}. {expr_name}: {metrics}")
 
     return expr_name, metrics
 
 
 if __name__ == '__main__':
-    alphas = [0, 0.5, 1]  # [0, 0.5, 0.8, 1]
-    test_sizes = [0.25, 0.5, 0.75]
-    compared_algs = [SparseBaseline]  #SparseEdgeProp,
+    alphas = [0, 1]  # [0, 0.5, 0.8, 1]
+    test_sizes = [0.75]
+    compared_algs = [SparseBaseline, SparseEdgeProp]  #SparseEdgeProp,
 
-    results_tpls = parmap(lambda args: run_alg_on_data(*args), list(product(alphas, test_sizes, compared_algs)), nprocs=1)
+    results_tpls = parmap(lambda args: run_alg_on_data(*args), list(product(alphas, test_sizes, compared_algs)), nprocs=3)
     results = dict(results_tpls)
 
     print(results)
