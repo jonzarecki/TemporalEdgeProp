@@ -94,7 +94,7 @@ class BaseModel(six.with_metaclass(ABCMeta), BaseEstimator, ClassifierMixin):
         else:
             return self.edge_distributions[u_index, v_index]
 
-    def fit(self, g: BaseGraph, label, val=(None, None)):
+    def fit(self, g: BaseGraph, label, val={}):
         """
         Uses the laplacian matrix to act as affinity matrix for the label-prop alg'
         :param g: The graph
@@ -105,7 +105,7 @@ class BaseModel(six.with_metaclass(ABCMeta), BaseEstimator, ClassifierMixin):
         self : returns a pointer to self
         """
         self.graph = g
-        self.val_indices, self.y_val = val
+        self.val = val
         adj_mat = g.adjacency_matrix(sparse=self.sparse)
         y = self._create_y(g, label)
         self.num_classes = y.shape[-1]
@@ -146,13 +146,13 @@ class BaseModel(six.with_metaclass(ABCMeta), BaseEstimator, ClassifierMixin):
         return y
 
     def write_evaluation_to_tensorboard(self, writer: SummaryWriter, global_step):
-        if self.val_indices is not None:
-            y_pred = self.predict_proba(self.val_indices)
-            metrics = get_all_metrics(y_pred, self.y_val)
+        for val_name, (val_indices, y_val) in self.val.items():
+            y_pred = self.predict_proba(val_indices)
+            metrics = get_all_metrics(y_pred, y_val)
             for metric_name, metric_value in metrics.items():
-                writer.add_scalar('val/'+metric_name, metric_value, global_step=global_step)
+                writer.add_scalar(f'{val_name}/{metric_name}', metric_value, global_step=global_step)
 
             pred_classes = y_pred.argmax(axis=-1)
-            writer.add_histogram('predicted_class', pred_classes, global_step=global_step)
+            writer.add_histogram(f'{val_name}/predicted_class', pred_classes, global_step=global_step)
             hist = entropy(np.histogram(pred_classes, bins=self.num_classes)[0], base=2) / entropy([1] * self.num_classes, base=2)
-            writer.add_scalar(f'val/predicted_class_entropy', hist, global_step=global_step)
+            writer.add_scalar(f'{val_name}/predicted_class_entropy', hist, global_step=global_step)

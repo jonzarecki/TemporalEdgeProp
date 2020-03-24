@@ -47,7 +47,7 @@ def run_alg_on_data(alpha, test_size, alg_cls):
         model = alg_cls(cache_name=data_name)
     else:
         model = alg_cls(max_iter=300, alpha=alpha, tol=1e-2, tb_exp_name=expr_name)
-    model.fit(graph, LABEL_TRAIN, val=(test_indices, y_test))
+    model.fit(graph, LABEL_TRAIN, val={'train:': (train_indices, y_train), 'validation': (test_indices, y_test)})
     y_pred = model.predict_proba(test_indices)
     print(np.unique(y_pred.argmax(axis=1), return_counts=True))
     # breakpoint()
