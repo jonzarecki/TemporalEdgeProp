@@ -27,6 +27,8 @@ class DataLoader:
                                              nx.get_edge_attributes(g.graph_nx, LABEL_GT)
         test_indices = np.array([i for i, e in enumerate(g.edge_order)
                                  if (train_labels_dict[e] == [NO_LABEL] and all_labels_dict[e] != [NO_LABEL])])
+        train_indices = np.array([i for i, e in enumerate(g.edge_order)
+                                 if (train_labels_dict[e] != [NO_LABEL] and all_labels_dict[e] != [NO_LABEL])])
 
         true_labels = np.array([all_labels_dict[e] for e in g.edge_order])  # all true labels
         true_labels_ndarray = MultiLabelBinarizer().fit_transform(true_labels)
@@ -34,7 +36,7 @@ class DataLoader:
             if not (sum(cur_y_test[true_label]) == len(true_label) == sum(cur_y_test)):
                 raise Exception('Classes got binarized not in the right order')
 
-        return g, true_labels_ndarray, test_indices
+        return g, true_labels_ndarray, test_indices, train_indices
 
     def _load_konect_dataset(self, path, trunc_nodes):
         graph = nx.read_edgelist(path, comments='#', data=self.dtype_tuples)
