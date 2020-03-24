@@ -45,7 +45,7 @@ def run_alg_on_data(alpha, test_size, alg_cls):
     if alg_cls == Node2VecClassifier:
         model = alg_cls(cache_name=data_name)
     else:
-        model = alg_cls(max_iter=300, alpha=alpha)
+        model = alg_cls(max_iter=300, alpha=alpha, tb_exp_name=expr_name)
     model.fit(graph, LABEL_TRAIN)
     y_pred = model.predict_proba(test_indices)
     metrics = {f'hit_at_{k}': round(hit_at_k(y_test, y_pred, k=k), 3) for k in [1, 5, 10]}
@@ -59,13 +59,14 @@ def run_alg_on_data(alpha, test_size, alg_cls):
 if __name__ == '__main__':
     np.random.seed(18)
     random.seed(18)
-    alphas = [0, 0.5, 0.8, 1]
-    test_sizes = [0.75, 0.8]
+    alphas = [1]#[0, 0.5, 0.8, 1]
+    test_sizes = [0.8]#[0.2,0.75, 0.8]
     compared_algs = [SparseEdgeProp, SparseBaseline, Node2VecClassifier]  #SparseEdgeProp,
+    compared_algs = [SparseEdgeProp]  #SparseEdgeProp,
 
-    # results_tpls = [run_alg_on_data(*args) for args in product(alphas, test_sizes, compared_algs)] #TODO no linux
-    results_tpls = parmap(lambda args: run_alg_on_data(*args), list(product(alphas, test_sizes, compared_algs)),
-                          use_tqdm=True, desc="Calculating model results:")
+    results_tpls = [run_alg_on_data(*args) for args in product(alphas, test_sizes, compared_algs)] #TODO no linux
+    # results_tpls = parmap(lambda args: run_alg_on_data(*args), list(product(alphas, test_sizes, compared_algs)),
+    #                       use_tqdm=True, desc="Calculating model results:")
     results = dict(results_tpls)
 
     print(results)

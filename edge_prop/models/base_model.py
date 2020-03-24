@@ -1,14 +1,20 @@
 import abc
+import io
+import logging
+import os
 import warnings
 from abc import ABCMeta
 
 import six
+from scipy import misc
 from sklearn.base import BaseEstimator, ClassifierMixin
 import numpy as np
 from sparse import DOK, COO
 
 from edge_prop.graph_wrappers import BaseGraph
-from edge_prop.constants import NO_LABEL
+from edge_prop.constants import NO_LABEL, EDGEPROP_BASE_DIR
+import networkx as nx
+import matplotlib.pyplot as plt
 
 
 class BaseModel(six.with_metaclass(ABCMeta), BaseEstimator, ClassifierMixin):
@@ -27,10 +33,11 @@ class BaseModel(six.with_metaclass(ABCMeta), BaseEstimator, ClassifierMixin):
     """
     _variant = 'propagation'
 
-    def __init__(self, max_iter: int = 50, tol: float = 1e-5, alpha: float = 1):
+    def __init__(self, max_iter: int = 50, tol: float = 1e-5, alpha: float = 1, tb_exp_name:str=None):
         self.alpha = alpha
         self.tol = tol
         self.max_iter = max_iter
+        self.tb_exp_name = tb_exp_name
 
         self.sparse = False
 
@@ -97,13 +104,17 @@ class BaseModel(six.with_metaclass(ABCMeta), BaseEstimator, ClassifierMixin):
         adj_mat = g.adjacency_matrix(sparse=self.sparse)
         y = self._create_y(g, label)
 
-        self.edge_distributions = self._perform_edge_prop_on_graph(adj_mat, y, max_iter=self.max_iter, tol=self.tol)
+        if y.shape[-1] > 2 and self.tb_exp_name is not None:
+            logging.warning("Graph visualization of multi class not supported ATM!")
+            self.tb_exp_name = None
+
+        self.edge_distributions = self._perform_edge_prop_on_graph(adj_mat, y, max_iter=self.max_iter, tol=self.tol, tb_exp_name = self.tb_exp_name)
 
         return self
 
     @abc.abstractmethod
     def _perform_edge_prop_on_graph(self, adj_mat: np.ndarray, y: np.ndarray, max_iter=100,
-                                    tol=1e-1) -> COO:
+                                    tol=1e-1, tb_exp_name:str=None) -> COO:
         """
         Performs the EdgeProp algorithm on the given graph.
         returns the label distribution (|N|, |N|) matrix with scores between -1, 1 stating the calculated label distribution.

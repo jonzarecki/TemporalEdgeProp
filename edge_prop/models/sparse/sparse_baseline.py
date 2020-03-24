@@ -2,9 +2,11 @@ import os
 import time
 
 import numpy as np
+from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 from sparse import COO
 
+from edge_prop.constants import TENSORBOARD_DIR
 from edge_prop.models import SparseBaseModel
 
 
@@ -13,12 +15,17 @@ EDGEPROP_BASE_DIR = os.path.dirname(__file__) + "/"
 
 class SparseBaseline(SparseBaseModel):
     def _perform_edge_prop_on_graph(self, adj_mat: np.ndarray, y: np.ndarray, max_iter=50,
-                                    tol=1e-3) -> np.ndarray:
+                                    tol=1e-3, tb_exp_name=None) -> np.ndarray:
         """
         Performs the EdgeProp algorithm on the given graph.
         returns the label distribution (|N|, |N|) matrix with scores between -1, 1 stating the calculated label distribution.
         """
         # A = adj_mat.todense()
+        if tb_exp_name is not None:
+            # create the tensorboard
+            path = os.path.join(TENSORBOARD_DIR, tb_exp_name)  # , str(datetime.datetime.now()))
+            writer = SummaryWriter(path)
+            global_step = 0
         Y = y
 
         l_previous = None
@@ -46,6 +53,10 @@ class SparseBaseline(SparseBaseModel):
         with tqdm(range(max_iter), desc='Fitting model', unit='iter') as pbar:
 
             for n_iter in pbar:
+                if tb_exp_name is not None:
+                    graph_image = graph2image(last_Y[:,:,-1], adj_mat)
+                    writer.add_image("Graph", graph_image, global_step=global_step)
+                    global_step += 1
                 dif = np.inf if l_previous is None else np.abs(last_Y - l_previous).sum()
                 pbar.set_postfix({'dif': dif})
                 if n_iter != 0 and dif < tol:  # did not change
