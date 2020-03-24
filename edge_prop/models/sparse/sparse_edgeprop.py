@@ -32,6 +32,7 @@ class SparseEdgeProp(SparseBaseModel):
             path = os.path.join(TENSORBOARD_DIR, tb_exp_name)  # , str(datetime.datetime.now()))
             writer = SummaryWriter(path)
             global_step = 0
+        logging.info("init calcs")
 
         label_distributions = y.copy()
         l_previous = None
@@ -41,10 +42,12 @@ class SparseEdgeProp(SparseBaseModel):
         D = D.astype(np.uint16)
         D[D == 0] = 1
         # mD = (D[:, np.newaxis] + D[np.newaxis, :])[:, :, np.newaxis]
-        A = adj_mat.tocsr()
+        A = adj_mat.tocsr().astype(dtype=np.bool)
+        adj_3d = adj_mat[:, :, np.newaxis]
         with tqdm(range(max_iter), desc='Fitting model', unit='iter') as pbar:
             for n_iter in pbar:
-                dif = np.inf if l_previous is None else np.abs(label_distributions - l_previous).sum()
+                logging.info("check cond")
+                dif = np.inf if l_previous is None else np.abs((label_distributions - l_previous).data).sum()
                 pbar.set_postfix({'dif': dif})
                 if n_iter != 0 and dif < tol:  # did not change
                     break  # end the loop, finished
@@ -60,17 +63,21 @@ class SparseEdgeProp(SparseBaseModel):
                     global_step += 1
                 l_previous = label_distributions.copy()
                 # B = adj_mat.dot(label_distributions).sum(axis=1)  # TODO: attention, was axis=0
-                B = A.dot(label_distributions.sum(axis=0).todense())  # same-effect, much faster
+                logging.info("dot prod")
+                B = A.dot(label_distributions.sum(axis=1).todense())  # same-effect, much faster
                 B /= D[:, np.newaxis]  # new, need to check equality
                 B = COO(B)
-                mat = np.multiply(adj_mat[:, :, np.newaxis], B[:, np.newaxis, :]) + \
-                      np.multiply(adj_mat[:, :, np.newaxis], B[np.newaxis, :, :])
+                logging.info("expand to 3d")
+                mat = adj_3d * B[:, np.newaxis, :] + \
+                      adj_3d * B[np.newaxis, :, :]  # each mul takes 10s in aminar_s
                 # mat /= mD
 
+                logging.info("norm mat")
                 mat_sum = np.sum(mat, axis=-1, keepdims=True)
                 mat_sum.fill_value = np.float64(1.0)
-                mat = mat / mat_sum
+                mat = mat / mat_sum  # 20s
 
+                logging.info("calc alpha changes")
                 # save original labels
                 original_edges_labels = y * self.alpha + (original_edge) * mat * (1 - self.alpha)
                 label_distributions = original_edges_labels + (1 - original_edge) * mat

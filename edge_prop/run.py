@@ -1,5 +1,6 @@
 import random
 import time
+import logging
 from itertools import product
 
 from edge_prop.common.metrics import get_all_metrics
@@ -34,17 +35,22 @@ def run_alg_on_data(alpha, test_size, alg_cls):
     print(expr_name)
     # create dataset
     path = DATASET2PATH[data_name]
-    graph, true_labels, test_indices = DataLoader(path, test_size=test_size).load_data()  # node number doesn't work on aminer
+    graph, true_labels, test_indices, train_indices = DataLoader(path, test_size=test_size).load_data()  # node number doesn't work on aminer
     y_test = true_labels[test_indices]
+    y_train = true_labels[train_indices]
+    print(np.unique(y_train.argmax(axis=1), return_counts=True))
+    print(np.unique(y_test.argmax(axis=1), return_counts=True))
 
     print(f"Calculating {alg_cls.__name__}:")
     st = time.time()
     if alg_cls == Node2VecClassifier:
         model = alg_cls(cache_name=data_name)
     else:
-        model = alg_cls(max_iter=300, alpha=alpha, tb_exp_name=expr_name)
+        model = alg_cls(max_iter=300, alpha=alpha, tol=1e-2, tb_exp_name=expr_name)
     model.fit(graph, LABEL_TRAIN, val=(test_indices, y_test))
     y_pred = model.predict_proba(test_indices)
+    print(np.unique(y_pred.argmax(axis=1), return_counts=True))
+    # breakpoint()
     metrics = get_all_metrics(y_pred, y_test)
     print(f"took {int(time.time() - st) / 60}. {expr_name}: {metrics}")
 
@@ -52,6 +58,12 @@ def run_alg_on_data(alpha, test_size, alg_cls):
 
 
 if __name__ == '__main__':
+    logging.getLogger().setLevel(logging.INFO)
+    logging.basicConfig(
+        format='%(asctime)s %(levelname)-8s %(message)s',
+        level=logging.INFO,
+        datefmt='%Y-%m-%d %H:%M:%S')
+    logging.info(f"start")
     np.random.seed(18)
     random.seed(18)
     alphas = [0, 1]
