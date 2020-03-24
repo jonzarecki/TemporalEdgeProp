@@ -1,7 +1,8 @@
 import os
+import time
 
 import numpy as np
-from tqdm.autonotebook import tqdm
+from tqdm import tqdm
 from sparse import COO
 
 from edge_prop.models import SparseBaseModel
@@ -22,18 +23,25 @@ class SparseBaseline(SparseBaseModel):
 
         l_previous = None
 
-        last_Y = adj_mat.dot(Y).sum(axis=1).todense()  # TODO: axis 0 or 1 ?
+        D = np.sum(adj_mat, axis=0)
+        D = D.todense()
+        D[D == 0] = 1
+        mD = D[:, np.newaxis]
+
+        # A = adj_mat.tocsr()
+        # s = adj_mat.sum(axis=0)
+        # s.fill_value = np.int64(1)
+        A = (adj_mat / mD).tocsr()  # norm rows
+        print("starting init setup")
+        last_Y = Y.sum(axis=0).todense()  # same as before, might be a bug
+        # last_Y = adj_mat.dot(Y).sum(axis=1).todense()  # TODO: axis 0 or 1 ?
+        # last_Y = last_Y.todense()
         mat_sum = np.sum(last_Y, axis=-1)[:, np.newaxis]
         mat_sum[mat_sum == 0] = 1
         last_Y = last_Y / mat_sum
-
         # D = np.sum(adj_mat, axis=0).todense()
         # D[D == 0] = 1
         # mD = D[:, np.newaxis]
-
-        D = np.sum(adj_mat, axis=0).todense()
-        D[D == 0] = 1
-        mD = D[:, np.newaxis]
 
         with tqdm(range(max_iter), desc='Fitting model', unit='iter') as pbar:
 
@@ -44,18 +52,26 @@ class SparseBaseline(SparseBaseModel):
                     break  # end the loop, finished
                 l_previous = last_Y.copy()
 
-                B = adj_mat.dot(last_Y)
+                # B = adj_mat.dot(last_Y)
+                B = A.dot(last_Y)
+                # as in paper
+                last_Y = B
+
+                continue
+                # below not specified in the paper
                 last_Y = B / mD
+                last_Y = last_Y / last_Y.sum(axis=1)[:, np.newaxis]
 
-
+        st = time.time()
+        print("starting expand to edge")
         last_Y = COO(last_Y)
         last_Y_edges = np.multiply(adj_mat[:, :, np.newaxis], last_Y[:, np.newaxis, :]) + \
-                       np.multiply(adj_mat[:, :, np.newaxis], last_Y[np.newaxis, :, :]).transpose([1, 0, 2])
-
+                       np.multiply(adj_mat[:, :, np.newaxis], last_Y[np.newaxis, :, :])
+        print("starting norm")
         mat_sum = np.sum(last_Y_edges, axis=-1, keepdims=True)
         mat_sum.fill_value = np.float64(1.0)
-        last_Y_edges = last_Y_edges / mat_sum
-
+        last_Y_edges = last_Y_edges / mat_sum  # sums all elems in dim 2 to 1
+        print(f"expand to edge + norm took {int(time.time() - st)}s")
         # last_Y = last_Y[:, np.newaxis, :] + last_Y[np.newaxis, :, :]
         # last_Y[A == 0] = 0
         # mat_sum = np.sum(last_Y[A != 0], axis=-1)[:, np.newaxis]

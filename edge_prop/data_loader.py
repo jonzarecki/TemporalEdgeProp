@@ -17,7 +17,7 @@ class DataLoader:
     def load_data(self, trunc_nodes: int = None):
         if 'aminer' in self.path:
             graph = self._load_aminer(self.path, trunc_nodes)
-        elif 'epinions' in self.path or 'Slashdot' in self.path:
+        elif 'epinions' in self.path or 'Slashdot' in self.path or 'elec' in self.path:
             graph = self._load_konect_dataset(self.path, trunc_nodes)
         else:
             raise Exception('No such dataset exists')

@@ -3,12 +3,13 @@ from itertools import product
 
 from edge_prop.common.metrics import mean_rank, hit_at_k
 from edge_prop.common.multiproc_utils import parmap
+from edge_prop.common import multiproc_utils
 from edge_prop.constants import DATASET2PATH
 from edge_prop.data_loader import DataLoader
 from edge_prop.models import SparseBaseline, SparseEdgeProp
 from edge_prop.constants import LABEL_GT, LABEL_TRAIN
 
-data_name = 'aminer_s'
+data_name = 'slashdot'#'epinions'#'aminer_s'
 
 
 def get_expr_name(alpha, test_size, alg_cls):
@@ -16,11 +17,22 @@ def get_expr_name(alpha, test_size, alg_cls):
 
 
 def run_alg_on_data(alpha, test_size, alg_cls):
+
+    if alg_cls == SparseBaseline:  # no alpha
+        if alpha != 0.:
+            return (get_expr_name(alpha, test_size, alg_cls), {})
+    if 'aminer' in data_name:
+        if test_size != 0.75:
+            return (get_expr_name(alpha, test_size, alg_cls), {})
+        test_size = 1.
+
     expr_name = get_expr_name(alpha, test_size, alg_cls)
+
+
     print(expr_name)
     # create dataset
-    path = DATASET2PATH['aminer_s']
-    graph, true_labels, test_indices = DataLoader(path, test_size=test_size).load_data()
+    path = DATASET2PATH[data_name]
+    graph, true_labels, test_indices = DataLoader(path, test_size=test_size).load_data(10_000)  # node number doesn't work on aminer
     y_test = true_labels[test_indices]
 
     print(f"Calculating {alg_cls.__name__}:")
@@ -31,18 +43,17 @@ def run_alg_on_data(alpha, test_size, alg_cls):
     metrics = {f'hit_at_{k}': round(hit_at_k(y_test, y_pred, k=k), 3) for k in [1, 5, 10]}
     metrics.update({'mean_rank': round(mean_rank(y_test, y_pred), 3)})
     # our_metrics.update({'accuracy': round(accuracy_score(y_test, y_pred), 3)})
-    print(f"took {(time.time() - st) / 60}. {metrics}")
+    print(f"took {int(time.time() - st) / 60}. {expr_name}: {metrics}")
 
     return expr_name, metrics
 
 
 if __name__ == '__main__':
-    alphas = [0, 0.5, 1]  # [0, 0.5, 0.8, 1]
-    test_sizes = [0.25, 0.5, 0.75]
-    compared_algs = [SparseEdgeProp, SparseBaseline]
+    alphas = [0, 1]  # [0, 0.5, 0.8, 1]
+    test_sizes = [0.75]
+    compared_algs = [SparseBaseline, SparseEdgeProp]  #SparseEdgeProp,
 
-    results_tpls = parmap(lambda args: run_alg_on_data(*args), list(product(alphas, test_sizes, compared_algs)),
-                          use_tqdm=True, desc="Calculating model results:")
+    results_tpls = parmap(lambda args: run_alg_on_data(*args), list(product(alphas, test_sizes, compared_algs)), nprocs=3)
     results = dict(results_tpls)
 
     print(results)
