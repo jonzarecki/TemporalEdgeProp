@@ -111,7 +111,7 @@ class BaseModel(six.with_metaclass(ABCMeta), BaseEstimator, ClassifierMixin):
         pass
 
     def _get_classes(self, g: BaseGraph, label) -> np.ndarray:
-        edge_labels = g.get_edge_attributes(label)
+        edge_labels = g.get_edge_attributes_ordered(label)
         classes = np.unique([label for _, y in edge_labels for label in y])
         classes = classes[classes != NO_LABEL]
         return classes
@@ -119,7 +119,7 @@ class BaseModel(six.with_metaclass(ABCMeta), BaseEstimator, ClassifierMixin):
     def _create_y(self, g, label):
         classes = self._get_classes(g, label)
         self.classes = classes
-        edge_labels = g.get_edge_attributes(label)
+        edge_labels = g.get_edge_attributes_ordered(label)
 
         y = np.zeros((g.n_nodes, g.n_nodes, len(classes)))
         for ((u, v), labels) in edge_labels:

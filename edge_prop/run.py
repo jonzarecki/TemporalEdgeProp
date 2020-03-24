@@ -1,3 +1,4 @@
+import random
 import time
 from itertools import product
 
@@ -8,6 +9,7 @@ from edge_prop.constants import DATASET2PATH
 from edge_prop.data_loader import DataLoader
 from edge_prop.models import SparseBaseline, SparseEdgeProp
 from edge_prop.constants import LABEL_GT, LABEL_TRAIN
+import numpy as np
 
 data_name = 'slashdot'#'epinions'#'aminer_s'
 
@@ -32,14 +34,17 @@ def run_alg_on_data(alpha, test_size, alg_cls):
     print(expr_name)
     # create dataset
     path = DATASET2PATH[data_name]
-    graph, true_labels, test_indices = DataLoader(path, test_size=test_size).load_data(10_000)  # node number doesn't work on aminer
+    graph, true_labels, test_indices = DataLoader(path, test_size=test_size).load_data()  # node number doesn't work on aminer
     y_test = true_labels[test_indices]
+    print(np.unique(y_test.argmax(axis=1), return_counts=True))
 
     print(f"Calculating {alg_cls.__name__}:")
     st = time.time()
-    model = alg_cls(max_iter=100, alpha=alpha)
+    model = alg_cls(max_iter=50, alpha=alpha, tol=1e-2)
     model.fit(graph, LABEL_TRAIN)
     y_pred = model.predict_proba(test_indices)
+    print(np.unique(y_pred.argmax(axis=1), return_counts=True))
+    # breakpoint()
     metrics = {f'hit_at_{k}': round(hit_at_k(y_test, y_pred, k=k), 3) for k in [1, 5, 10]}
     metrics.update({'mean_rank': round(mean_rank(y_test, y_pred), 3)})
     # our_metrics.update({'accuracy': round(accuracy_score(y_test, y_pred), 3)})
@@ -49,11 +54,13 @@ def run_alg_on_data(alpha, test_size, alg_cls):
 
 
 if __name__ == '__main__':
-    alphas = [0, 1]  # [0, 0.5, 0.8, 1]
-    test_sizes = [0.75]
-    compared_algs = [SparseBaseline, SparseEdgeProp]  #SparseEdgeProp,
+    np.random.seed(18)
+    random.seed(18)
+    alphas = [1]  # [0, 0.5, 0.8, 1]
+    test_sizes = [0.75, 0.1]
+    compared_algs = [SparseEdgeProp]  #SparseEdgeProp,
 
-    results_tpls = parmap(lambda args: run_alg_on_data(*args), list(product(alphas, test_sizes, compared_algs)), nprocs=3)
+    results_tpls = parmap(lambda args: run_alg_on_data(*args), list(product(alphas, test_sizes, compared_algs)), nprocs=1)
     results = dict(results_tpls)
 
     print(results)

@@ -23,7 +23,7 @@ class Node2VecClassifier:
         self.edge_vectors = np.stack(edge_vectors)
 
         # extract the train set
-        edge_labels = np.array([label[0] for edge, label in g.get_edge_attributes(label)])
+        edge_labels = np.array([label[0] for edge, label in g.get_edge_attributes_ordered(label)])
         train_mask = edge_labels != NO_LABEL
         x_train = self.edge_vectors[train_mask == True]
         y_train = edge_labels[train_mask]

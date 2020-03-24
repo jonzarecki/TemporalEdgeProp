@@ -15,7 +15,7 @@ EDGEPROP_BASE_DIR = os.path.dirname(__file__) + "/"
 
 class SparseEdgeProp(SparseBaseModel):
     def _perform_edge_prop_on_graph(self, adj_mat: COO, y: COO, max_iter=100,
-                                    tol=1e-5) -> np.ndarray:
+                                    tol=1e-3) -> np.ndarray:
         """
         Performs the EdgeProp algorithm on the given graph.
         returns the label distribution (|N|, |N|) matrix with scores between -1, 1 stating the calculated label distribution.
@@ -24,12 +24,13 @@ class SparseEdgeProp(SparseBaseModel):
 
         label_distributions = y.copy()
         l_previous = None
+        not_original_edge = y.sum(axis=-1, keepdims=True) == 0
         D = adj_mat.sum(axis=0).todense()
         assert D.astype(np.uint16).max() == D.max()
         D = D.astype(np.uint16)
         D[D == 0] = 1
         # mD = (D[:, np.newaxis] + D[np.newaxis, :])[:, :, np.newaxis]
-
+        A = adj_mat.tocsr()
         with tqdm(range(max_iter), desc='Fitting model', unit='iter') as pbar:
             for n_iter in pbar:
                 dif = np.inf if l_previous is None else np.abs(label_distributions - l_previous).sum()
@@ -38,9 +39,11 @@ class SparseEdgeProp(SparseBaseModel):
                     break  # end the loop, finished
                 l_previous = label_distributions.copy()
                 # B = adj_mat.dot(label_distributions).sum(axis=1)  # TODO: attention, was axis=0
-                B = adj_mat.dot(label_distributions.sum(axis=0))  # same-effect, much faster
+                B = A.dot(label_distributions.sum(axis=0).todense())  # same-effect, much faster
                 B /= D[:, np.newaxis]  # new, need to check equality
-                mat = np.multiply(adj_mat[:, :, np.newaxis], B[:, np.newaxis, :]) + np.multiply(adj_mat[:, :, np.newaxis], B[np.newaxis, :, :])
+                B = COO(B)
+                mat = np.multiply(adj_mat[:, :, np.newaxis], B[:, np.newaxis, :]) + \
+                      np.multiply(adj_mat[:, :, np.newaxis], B[np.newaxis, :, :])
                 # mat /= mD
 
                 mat_sum = np.sum(mat, axis=-1, keepdims=True)
@@ -48,10 +51,8 @@ class SparseEdgeProp(SparseBaseModel):
                 mat = mat / mat_sum
 
                 # save original labels
-                not_original_edge = y.sum(axis=-1, keepdims=True) == 0
-                original_edges = y * self.alpha + (1- not_original_edge) * mat * (1 - self.alpha)
-                mat = original_edges + not_original_edge * mat
-                label_distributions = mat
+                original_edges_labels = y * self.alpha + (1 - not_original_edge) * mat * (1 - self.alpha)
+                label_distributions = original_edges_labels + not_original_edge * mat
             else:
                 warnings.warn("max_iter was reached without convergence", category=ConvergenceWarning)
                 n_iter += 1

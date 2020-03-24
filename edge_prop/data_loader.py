@@ -23,18 +23,18 @@ class DataLoader:
             raise Exception('No such dataset exists')
 
         g = BaseGraph(graph)
-        test_indices = np.array(
-            [i for i, (_, label) in enumerate(g.get_edge_attributes(LABEL_TRAIN)) if label == [NO_LABEL]])
-        test_indices = np.array([i for i, (_, label) in enumerate(g.get_edge_attributes(LABEL_GT)) if
-                                 label != [NO_LABEL] and i in test_indices])
+        train_labels_dict, all_labels_dict = nx.get_edge_attributes(g.graph_nx, LABEL_TRAIN), \
+                                             nx.get_edge_attributes(g.graph_nx, LABEL_GT)
+        test_indices = np.array([i for i, e in enumerate(g.edge_order)
+                                 if (train_labels_dict[e] == [NO_LABEL] and all_labels_dict[e] != [NO_LABEL])])
 
-        true_labels = np.array([label for _, label in g.get_edge_attributes(LABEL_GT)])
-        y_test = MultiLabelBinarizer().fit_transform(true_labels)
-        for cur_y_test, true_label in zip(y_test, true_labels):
+        true_labels = np.array([all_labels_dict[e] for e in g.edge_order])  # all true labels
+        true_labels_ndarray = MultiLabelBinarizer().fit_transform(true_labels)
+        for cur_y_test, true_label in zip(true_labels_ndarray, true_labels):
             if not (sum(cur_y_test[true_label]) == len(true_label) == sum(cur_y_test)):
                 raise Exception('Classes got binarized not in the right order')
 
-        return g, y_test, test_indices
+        return g, true_labels_ndarray, test_indices
 
     def _load_konect_dataset(self, path, trunc_nodes):
         graph = nx.read_edgelist(path, comments='#', data=self.dtype_tuples)
@@ -42,10 +42,12 @@ class DataLoader:
             graph.remove_nodes_from(map(str, range(trunc_nodes, graph.number_of_nodes())))
         edge2label = nx.get_edge_attributes(graph, LABEL_GT)
         edge2label = {edge: [0 if label < 0 else label] for edge, label in edge2label.items()}
-        nx.set_edge_attributes(graph, edge2label, LABEL_GT)
-        _, test_edges = train_test_split(list(edge2label.keys()), test_size=self.test_size)
-        edge2label.update({edge: [NO_LABEL] for edge in test_edges})
-        nx.set_edge_attributes(graph, edge2label, LABEL_TRAIN)
+        nx.set_edge_attributes(graph, edge2label, LABEL_GT)  # override LABEL_GT
+        train_edges, test_edges = train_test_split(list(edge2label.keys()), test_size=self.test_size)
+        # jz: this is very hard to read, whoever wrote it.
+        edge2label.update({edge: [NO_LABEL] for edge in test_edges})  # train labels are retained, test are overriden
+        nx.set_edge_attributes(graph, edge2label, LABEL_TRAIN)  # LABEL_GT still holds all labels
+        # no labels in LABEL_TRAIN yet
         return graph
 
     def _load_aminer(self, path):

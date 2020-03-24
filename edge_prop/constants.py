@@ -8,7 +8,7 @@ AGG_TIMES_LIST_ATTR = "agg_times_list"
 
 LABEL_GT = 'label'
 LABEL_TRAIN = 'label_train'
-LABEL_PRED = 'label_pred'
+LABEL_PRED = 'label_pred'  #TODO: not used
 NO_LABEL = -1
 
 DATA_PATH = join(EDGEPROP_BASE_DIR, 'data')
