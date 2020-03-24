@@ -21,8 +21,8 @@ class SparseBaseModel(BaseModel):
 
     """
 
-    def __init__(self, max_iter: int = 50, tol: float = 1e-3, alpha: float = 1):
-        super(SparseBaseModel, self).__init__(max_iter, tol, alpha)
+    def __init__(self, max_iter: int = 50, tol: float = 1e-3, alpha: float = 1, tb_exp_name:str=None):
+        super(SparseBaseModel, self).__init__(max_iter, tol, alpha, tb_exp_name)
         self.sparse = True
 
     def _create_y(self, g, label):

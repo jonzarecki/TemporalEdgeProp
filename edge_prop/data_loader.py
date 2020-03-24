@@ -16,8 +16,8 @@ class DataLoader:
 
     def load_data(self, trunc_nodes: int = None):
         if 'aminer' in self.path:
-            graph = self._load_aminer(self.path)
-        elif 'epinions' in self.path or 'Slashdot' in self.path or 'elec' in self.path:
+            graph = self._load_aminer(self.path, trunc_nodes)
+        elif 'epinions' in self.path or 'Slashdot' in self.path or 'elec' in self.path or 'ucidata' in self.path :
             graph = self._load_konect_dataset(self.path, trunc_nodes)
         else:
             raise Exception('No such dataset exists')
@@ -52,17 +52,28 @@ class DataLoader:
         # no labels in LABEL_TRAIN yet
         return graph
 
-    def _load_aminer(self, path):
+    def _load_aminer(self, path, trunc_nodes):
         edges_train, labels_train = DataLoader._get_triples(join(path, 'train.txt'))
-        edges_test, labels_test = DataLoader._get_triples(join(path, 'valid.txt'))
-        graph = nx.from_edgelist(np.concatenate([edges_train, edges_test]))
+        edges_val, labels_val = DataLoader._get_triples(join(path, 'valid.txt'))
+        edges_test, labels_test = DataLoader._get_triples(join(path, 'test.txt'))
+        if trunc_nodes is not None:
+            edges_train, labels_train = edges_train[:trunc_nodes], labels_train[:trunc_nodes]
+            edges_val, labels_val = edges_val[:trunc_nodes], labels_val[:trunc_nodes]
+            edges_test, labels_test = edges_test[:trunc_nodes], labels_test[:trunc_nodes]
+
+        graph = nx.from_edgelist(np.concatenate([edges_train, edges_val, edges_test]))
         edge2label = {}
         edge2label.update({edge: label for edge, label in zip(edges_train, labels_train)})
+        edge2label.update({edge: label for edge, label in zip(edges_val, labels_val)})
         edge2label.update({edge: label for edge, label in zip(edges_test, labels_test)})
         nx.set_edge_attributes(graph, edge2label, LABEL_GT)
+
         edge2label.update({edge: [NO_LABEL] for edge in edges_test})
         nx.set_edge_attributes(graph, edge2label, LABEL_TRAIN)
+
+
         return graph
+
 
     @staticmethod
     def _get_triples(path):

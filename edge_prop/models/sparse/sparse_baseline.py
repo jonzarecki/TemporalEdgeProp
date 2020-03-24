@@ -1,11 +1,15 @@
+import logging
 import os
 import time
 
 import numpy as np
+from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 from sparse import COO
 
+from edge_prop.constants import TENSORBOARD_DIR
 from edge_prop.models import SparseBaseModel
+from edge_prop.visualization.adj_mat_to_image import graph2image
 
 
 EDGEPROP_BASE_DIR = os.path.dirname(__file__) + "/"
@@ -13,12 +17,19 @@ EDGEPROP_BASE_DIR = os.path.dirname(__file__) + "/"
 
 class SparseBaseline(SparseBaseModel):
     def _perform_edge_prop_on_graph(self, adj_mat: np.ndarray, y: np.ndarray, max_iter=50,
-                                    tol=1e-3) -> np.ndarray:
+                                    tol=1e-3, tb_exp_name=None) -> np.ndarray:
         """
         Performs the EdgeProp algorithm on the given graph.
         returns the label distribution (|N|, |N|) matrix with scores between -1, 1 stating the calculated label distribution.
         """
         # A = adj_mat.todense()
+        if tb_exp_name is not None:
+            # create the tensorboard
+            logging.warning("tensorboard Not implemented yet for baseline")
+            self.tb_exp_name = None
+            # path = os.path.join(TENSORBOARD_DIR, tb_exp_name)  # , str(datetime.datetime.now()))
+            # writer = SummaryWriter(path)
+            # global_step = 0
         Y = y
 
         l_previous = None
