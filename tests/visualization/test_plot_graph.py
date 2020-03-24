@@ -14,5 +14,5 @@ class TestPlot_graph(TestCase):
 
         image = graph2image(probas_mat, adj_mat)
 
-        plt.imshow(image)
+        plt.imshow(image.T)
         plt.show()

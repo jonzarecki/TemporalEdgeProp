@@ -31,7 +31,8 @@ def _create_graph_figure(graph, colors):
                "width": 4,
                "with_labels": False}
     figure = plt.figure()
-    nx.draw(graph, **options)
+    pos = nx.spring_layout(graph, seed=18)
+    nx.draw(graph, pos, **options)
     return figure
 
 

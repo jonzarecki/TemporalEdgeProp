@@ -1,3 +1,4 @@
+import logging
 import os
 import time
 
@@ -8,6 +9,7 @@ from sparse import COO
 
 from edge_prop.constants import TENSORBOARD_DIR
 from edge_prop.models import SparseBaseModel
+from edge_prop.visualization.adj_mat_to_image import graph2image
 
 
 EDGEPROP_BASE_DIR = os.path.dirname(__file__) + "/"
@@ -23,9 +25,11 @@ class SparseBaseline(SparseBaseModel):
         # A = adj_mat.todense()
         if tb_exp_name is not None:
             # create the tensorboard
-            path = os.path.join(TENSORBOARD_DIR, tb_exp_name)  # , str(datetime.datetime.now()))
-            writer = SummaryWriter(path)
-            global_step = 0
+            logging.warning("tensorboard Not implemented yet for baseline")
+            self.tb_exp_name = None
+            # path = os.path.join(TENSORBOARD_DIR, tb_exp_name)  # , str(datetime.datetime.now()))
+            # writer = SummaryWriter(path)
+            # global_step = 0
         Y = y
 
         l_previous = None
@@ -53,10 +57,6 @@ class SparseBaseline(SparseBaseModel):
         with tqdm(range(max_iter), desc='Fitting model', unit='iter') as pbar:
 
             for n_iter in pbar:
-                if tb_exp_name is not None:
-                    graph_image = graph2image(last_Y[:,:,-1], adj_mat)
-                    writer.add_image("Graph", graph_image, global_step=global_step)
-                    global_step += 1
                 dif = np.inf if l_previous is None else np.abs(last_Y - l_previous).sum()
                 pbar.set_postfix({'dif': dif})
                 if n_iter != 0 and dif < tol:  # did not change
