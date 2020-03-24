@@ -70,10 +70,7 @@ class DataLoader:
 
         edge2label.update({edge: [NO_LABEL] for edge in edges_test})
         nx.set_edge_attributes(graph, edge2label, LABEL_TRAIN)
-
-
         return graph
-
 
     @staticmethod
     def _get_triples(path):

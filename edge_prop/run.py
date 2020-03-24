@@ -16,7 +16,7 @@ from edge_prop.constants import LABEL_GT, LABEL_TRAIN
 from edge_prop.models.node2vec_classifier import Node2VecClassifier
 import numpy as np
 
-data_name = 'tribes'#'slashdot'#'epinions'#'aminer_s'
+data_name = 'aminer_s'#'epinions'#'aminer_s'
 
 
 def get_expr_name(alpha, test_size, alg_cls):
@@ -50,7 +50,7 @@ def run_alg_on_data(alpha, test_size, alg_cls):
     if alg_cls == Node2VecClassifier:
         model = alg_cls(cache_name=data_name)
     else:
-        model = alg_cls(max_iter=300, alpha=alpha, tb_exp_name=expr_name)
+        model = alg_cls(max_iter=300, alpha=alpha, tol=1e-2, tb_exp_name=expr_name)
     model.fit(graph, LABEL_TRAIN)
     y_pred = model.predict_proba(test_indices)
     print(np.unique(y_pred.argmax(axis=1), return_counts=True))
@@ -72,8 +72,10 @@ if __name__ == '__main__':
     logging.info(f"start")
     np.random.seed(18)
     random.seed(18)
-    alphas = [0, 0.5, 0.8, 1]
-    test_sizes = [0.8]#[0.2,0.75, 0.8]
+    # alphas = [0, 0.5, 0.8, 1]
+    # test_sizes = [0.8]#[0.2,0.75, 0.8]
+    alphas = [1]  # [0, 0.5, 0.8, 1]
+    test_sizes = [0.75, 0.1]
     compared_algs = [SparseEdgeProp, SparseBaseline, Node2VecClassifier]  #SparseEdgeProp,
     compared_algs = [SparseEdgeProp, SparseBaseline]  #SparseEdgeProp,
 
