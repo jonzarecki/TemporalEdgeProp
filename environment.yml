@@ -34,3 +34,4 @@ dependencies:
     - tqdm
     - pathos  # for parmap
     - networkx
+    - tensorboard

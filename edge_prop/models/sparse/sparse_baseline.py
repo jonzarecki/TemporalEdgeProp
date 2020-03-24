@@ -25,11 +25,11 @@ class SparseBaseline(SparseBaseModel):
         # A = adj_mat.todense()
         if tb_exp_name is not None:
             # create the tensorboard
-            logging.warning("tensorboard Not implemented yet for baseline")
-            self.tb_exp_name = None
-            # path = os.path.join(TENSORBOARD_DIR, tb_exp_name)  # , str(datetime.datetime.now()))
-            # writer = SummaryWriter(path)
-            # global_step = 0
+            # logging.warning("tensorboard Not implemented yet for baseline")
+            # self.tb_exp_name = None
+            path = os.path.join(TENSORBOARD_DIR, tb_exp_name)  # , str(datetime.datetime.now()))
+            writer = SummaryWriter(path)
+            global_step = 0
         Y = y
 
         l_previous = None
@@ -61,6 +61,22 @@ class SparseBaseline(SparseBaseModel):
                 pbar.set_postfix({'dif': dif})
                 if n_iter != 0 and dif < tol:  # did not change
                     break  # end the loop, finished
+                if tb_exp_name is not None:
+                    last_Y_tmp = COO(last_Y)
+                    last_Y_edges = np.multiply(adj_mat[:, :, np.newaxis], last_Y_tmp[:, np.newaxis, :]) + \
+                                   np.multiply(adj_mat[:, :, np.newaxis], last_Y_tmp[np.newaxis, :, :])
+                    print("starting norm")
+                    mat_sum = np.sum(last_Y_edges, axis=-1, keepdims=True)
+                    mat_sum.fill_value = np.float64(1.0)
+                    if y.shape[-1] > 2:
+                        logging.warning("Graph visualization of multi class not supported ATM!")
+                    else:
+                        graph_image = graph2image(label_distributions[:, :, -1], adj_mat)
+                        writer.add_image("Graph", graph_image, global_step=global_step)
+                    self.edge_distributions = last_Y_edges / mat_sum  # sums all elems in dim 2 to 1
+                    self.write_evaluation_to_tensorboard(writer, global_step)
+                    writer.flush()
+                    global_step += 1
                 l_previous = last_Y.copy()
 
                 # B = adj_mat.dot(last_Y)

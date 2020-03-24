@@ -10,9 +10,12 @@ from scipy import misc
 from sklearn.base import BaseEstimator, ClassifierMixin
 import numpy as np
 from sparse import DOK, COO
+from torch.utils.tensorboard import SummaryWriter
+from scipy.stats import entropy
 
 from edge_prop.graph_wrappers import BaseGraph
 from edge_prop.constants import NO_LABEL, EDGEPROP_BASE_DIR
+from edge_prop.common.metrics import get_all_metrics
 import networkx as nx
 import matplotlib.pyplot as plt
 
@@ -33,7 +36,7 @@ class BaseModel(six.with_metaclass(ABCMeta), BaseEstimator, ClassifierMixin):
     """
     _variant = 'propagation'
 
-    def __init__(self, max_iter: int = 50, tol: float = 1e-5, alpha: float = 1, tb_exp_name:str=None):
+    def __init__(self, max_iter: int = 50, tol: float = 1e-5, alpha: float = 1, tb_exp_name: str = None):
         self.alpha = alpha
         self.tol = tol
         self.max_iter = max_iter
@@ -61,7 +64,8 @@ class BaseModel(six.with_metaclass(ABCMeta), BaseEstimator, ClassifierMixin):
         for i in indices:
             u, v = self.graph.edge_order[i]
             dist = self.get_edge_distributions(u, v)  # label distribution
-            assert np.allclose(self.get_edge_distributions(u, v), self.get_edge_distributions(v, u)), "graphs are undirectional, shouldn't happen"
+            assert np.allclose(self.get_edge_distributions(u, v),
+                               self.get_edge_distributions(v, u)), "graphs are undirectional, shouldn't happen"
             if len(dist[dist == dist.max()]) > 1:
                 warnings.warn(f"edge {(u, v)} doesn't have a definitive max: {dist}", category=RuntimeWarning)
             results.append(self.classes[dist.argmax()])  # returned index and not the class
@@ -90,7 +94,7 @@ class BaseModel(six.with_metaclass(ABCMeta), BaseEstimator, ClassifierMixin):
         else:
             return self.edge_distributions[u_index, v_index]
 
-    def fit(self, g: BaseGraph, label):
+    def fit(self, g: BaseGraph, label, val=(None, None)):
         """
         Uses the laplacian matrix to act as affinity matrix for the label-prop alg'
         :param g: The graph
@@ -101,20 +105,19 @@ class BaseModel(six.with_metaclass(ABCMeta), BaseEstimator, ClassifierMixin):
         self : returns a pointer to self
         """
         self.graph = g
+        self.val_indices, self.y_val = val
         adj_mat = g.adjacency_matrix(sparse=self.sparse)
         y = self._create_y(g, label)
+        self.num_classes = y.shape[-1]
 
-        if y.shape[-1] > 2 and self.tb_exp_name is not None:
-            logging.warning("Graph visualization of multi class not supported ATM!")
-            self.tb_exp_name = None
-
-        self.edge_distributions = self._perform_edge_prop_on_graph(adj_mat, y, max_iter=self.max_iter, tol=self.tol, tb_exp_name = self.tb_exp_name)
+        self.edge_distributions = self._perform_edge_prop_on_graph(adj_mat, y, max_iter=self.max_iter, tol=self.tol,
+                                                                   tb_exp_name=self.tb_exp_name)
 
         return self
 
     @abc.abstractmethod
     def _perform_edge_prop_on_graph(self, adj_mat: np.ndarray, y: np.ndarray, max_iter=100,
-                                    tol=1e-1, tb_exp_name:str=None) -> COO:
+                                    tol=1e-1, tb_exp_name: str = None) -> COO:
         """
         Performs the EdgeProp algorithm on the given graph.
         returns the label distribution (|N|, |N|) matrix with scores between -1, 1 stating the calculated label distribution.
@@ -138,6 +141,18 @@ class BaseModel(six.with_metaclass(ABCMeta), BaseEstimator, ClassifierMixin):
             reverse_edge = tuple(reversed(edge))
             for label in labels:
                 if label != NO_LABEL:
-                    y[edge][label] = 1/len(labels)
-                    y[reverse_edge][label] = 1/len(labels)
+                    y[edge][label] = 1 / len(labels)
+                    y[reverse_edge][label] = 1 / len(labels)
         return y
+
+    def write_evaluation_to_tensorboard(self, writer: SummaryWriter, global_step):
+        if self.val_indices is not None:
+            y_pred = self.predict_proba(self.val_indices)
+            metrics = get_all_metrics(y_pred, self.y_val)
+            for metric_name, metric_value in metrics.items():
+                writer.add_scalar('val/'+metric_name, metric_value, global_step=global_step)
+
+            pred_classes = y_pred.argmax(axis=-1)
+            writer.add_histogram('predicted_class', pred_classes, global_step=global_step)
+            hist = entropy(np.histogram(pred_classes, bins=self.num_classes)[0], base=2) / entropy([1] * self.num_classes, base=2)
+            writer.add_scalar(f'val/predicted_class_entropy', hist, global_step=global_step)

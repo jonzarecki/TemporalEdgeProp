@@ -1,4 +1,5 @@
 import numpy as np
+from sklearn.metrics import accuracy_score
 
 
 def mean_rank(y_test, y_pred):
@@ -18,3 +19,10 @@ def hit_at_k(y_test, y_pred, k=1):
         k_hits = np.isin(cur_y_pred_index, cur_y_test_index).sum()
         hits += k_hits
     return hits/y_test.sum()*100
+
+
+def get_all_metrics(y_pred, y_test):
+    metrics = {f'hit_at_{k}': round(hit_at_k(y_test, y_pred, k=k), 3) for k in [1, 5, 10]}
+    metrics.update({'mean_rank': round(mean_rank(y_test, y_pred), 3)})
+    metrics.update({'accuracy': round(accuracy_score(y_test.argmax(axis=-1), y_pred.argmax(axis=-1)), 3)})
+    return metrics
