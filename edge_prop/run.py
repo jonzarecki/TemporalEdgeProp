@@ -63,9 +63,9 @@ if __name__ == '__main__':
     test_sizes = [0.75, 0.8]
     compared_algs = [SparseEdgeProp, SparseBaseline, Node2VecClassifier]  #SparseEdgeProp,
 
-    results_tpls = [run_alg_on_data(*args) for args in product(alphas, test_sizes, compared_algs)] #TODO no linux
-    # results_tpls = parmap(lambda args: run_alg_on_data(*args), list(product(alphas, test_sizes, compared_algs)),
-    #                       use_tqdm=True, desc="Calculating model results:")
+    # results_tpls = [run_alg_on_data(*args) for args in product(alphas, test_sizes, compared_algs)] #TODO no linux
+    results_tpls = parmap(lambda args: run_alg_on_data(*args), list(product(alphas, test_sizes, compared_algs)),
+                          use_tqdm=True, desc="Calculating model results:")
     results = dict(results_tpls)
 
     print(results)
