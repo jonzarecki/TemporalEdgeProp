@@ -13,7 +13,7 @@ EDGEPROP_BASE_DIR = os.path.dirname(__file__) + "/"
 
 class SparseBaseline(SparseBaseModel):
     def _perform_edge_prop_on_graph(self, adj_mat: np.ndarray, y: np.ndarray, max_iter=50,
-                                    tol=1e-5) -> np.ndarray:
+                                    tol=1e-3) -> np.ndarray:
         """
         Performs the EdgeProp algorithm on the given graph.
         returns the label distribution (|N|, |N|) matrix with scores between -1, 1 stating the calculated label distribution.

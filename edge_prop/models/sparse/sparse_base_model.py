@@ -21,7 +21,7 @@ class SparseBaseModel(BaseModel):
 
     """
 
-    def __init__(self, max_iter: int = 50, tol: float = 1e-5, alpha: float = 1):
+    def __init__(self, max_iter: int = 50, tol: float = 1e-3, alpha: float = 1):
         super(SparseBaseModel, self).__init__(max_iter, tol, alpha)
         self.sparse = True
 
@@ -29,7 +29,7 @@ class SparseBaseModel(BaseModel):
         classes = self._get_classes(g, label)
         self.classes = classes
         lbl2idx = {l:i for i, l in enumerate(self.classes)}
-        edge_labels = g.get_edge_attributes(label)
+        edge_labels = g.get_edge_attributes_ordered(label)
 
         values = {}
         for ((u, v), labels) in edge_labels:
