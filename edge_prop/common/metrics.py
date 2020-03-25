@@ -7,7 +7,7 @@ def mean_rank(y_test, y_pred):
     for cur_y_test, cur_y_pred in zip(y_test, y_pred):
         cur_y_test_index = np.where(cur_y_test != 0)[0]
         cur_y_pred_index = np.argsort(cur_y_pred)[::-1]
-        ranks += list(np.where(np.isin(cur_y_pred_index, cur_y_test_index))[0]+1)
+        ranks += list(np.where(np.isin(cur_y_pred_index, cur_y_test_index))[0] + 1)
     return np.mean(ranks)
 
 
@@ -18,7 +18,8 @@ def hit_at_k(y_test, y_pred, k=1):
         cur_y_pred_index = np.argsort(cur_y_pred)[::-1][:k]
         k_hits = np.isin(cur_y_pred_index, cur_y_test_index).sum()
         hits += k_hits
-    return hits/y_test.sum()*100
+    max_possible_hist = np.minimum(5, y_test.sum(axis=1)).sum()
+    return hits / max_possible_hist * 100
 
 
 def get_all_metrics(y_pred, y_test):
