@@ -40,5 +40,5 @@ class SparseBaseModel(BaseModel):
                     values[(edge[0], edge[1], lbl_idx)] = 1/len(labels)
                     values[(edge[1], edge[0], lbl_idx)] = 1/len(labels)
 
-        y = DOK((g.n_nodes, g.n_nodes, len(classes)), values, dtype=np.float32)
+        y = DOK((g.n_nodes, g.n_nodes, len(classes)), values, dtype=np.float16)  # reduced to save mem
         return y.to_coo()
