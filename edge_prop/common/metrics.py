@@ -18,7 +18,7 @@ def hit_at_k(y_test, y_pred, k=1):
         cur_y_pred_index = np.argsort(cur_y_pred)[::-1][:k]
         k_hits = np.isin(cur_y_pred_index, cur_y_test_index).sum()
         hits += k_hits
-    max_possible_hist = np.minimum(5, y_test.sum(axis=1)).sum()
+    max_possible_hist = np.minimum(k, y_test.sum(axis=1)).sum()
     return hits / max_possible_hist * 100
 
 
