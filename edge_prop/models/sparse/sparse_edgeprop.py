@@ -55,7 +55,7 @@ class SparseEdgeProp(SparseBaseModel):
                     if y.shape[-1] > 2:
                         logging.warning("Graph visualization of multi class not supported ATM!")
                     else:
-                        graph_image = graph2image(label_distributions[:,:,-1], adj_mat)
+                        graph_image = graph2image(label_distributions[:,:,-1], adj_mat)  # pretty slow
                         writer.add_image("Graph", graph_image, global_step=global_step)
                     self.edge_distributions = label_distributions
                     self.write_evaluation_to_tensorboard(writer, global_step)

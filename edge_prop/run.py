@@ -1,6 +1,7 @@
 import random
 import time
 import logging
+from datetime import datetime
 from itertools import product
 
 from edge_prop.common.metrics import get_all_metrics
@@ -12,7 +13,6 @@ from edge_prop.constants import LABEL_TRAIN
 from edge_prop.models.node2vec_classifier import Node2VecClassifier
 import numpy as np
 
-data_name = 'aminer_s'#'slashdot'#'epinions'#'aminer_s'
 
 
 def get_expr_name(alpha, test_size, alg_cls):
@@ -29,8 +29,7 @@ def run_alg_on_data(alpha, test_size, alg_cls):
             return (get_expr_name(alpha, test_size, alg_cls), {})
         test_size = 1.
 
-    expr_name = get_expr_name(alpha, test_size, alg_cls)
-
+    expr_name = f"{get_expr_name(alpha, test_size, alg_cls)}-{datetime.now().isoformat(' ', 'seconds')}"
 
     print(expr_name)
     # create dataset
@@ -56,9 +55,9 @@ def run_alg_on_data(alpha, test_size, alg_cls):
 
     return expr_name, metrics
 
+data_name = 'aminer_m'#'slashdot'#'epinions'#'aminer_s'
 
 if __name__ == '__main__':
-    logging.getLogger().setLevel(logging.INFO)
     logging.basicConfig(
         format='%(asctime)s %(levelname)-8s %(message)s',
         level=logging.INFO,
@@ -66,14 +65,14 @@ if __name__ == '__main__':
     logging.info(f"start")
     np.random.seed(18)
     random.seed(18)
-    alphas = [0, 1]
+    alphas = [0, 0.8, 1]
     test_sizes = [0.75]#[0.2,0.75, 0.8]
     compared_algs = [SparseEdgeProp, SparseBaseline, Node2VecClassifier]  #SparseEdgeProp,
-    compared_algs = [SparseEdgeProp, SparseBaseline]  #SparseEdgeProp,
+    # compared_algs = [SparseEdgeProp, SparseBaseline]  #SparseEdgeProp,
 
-    # results_tpls = [run_alg_on_data(*args) for args in product(alphas, test_sizes, compared_algs)] #TODO no linux
-    results_tpls = parmap(lambda args: run_alg_on_data(*args), list(product(alphas, test_sizes, compared_algs)),
-                          use_tqdm=True, desc="Calculating model results:")
+    results_tpls = [run_alg_on_data(*args) for args in product(alphas, test_sizes, compared_algs)] #TODO no linux
+    # results_tpls = parmap(lambda args: run_alg_on_data(*args), list(product(alphas, test_sizes, compared_algs)),
+    #                       use_tqdm=True, desc="Calculating model results:", nprocs=1)
     results = dict(results_tpls)
 
     print(results)
