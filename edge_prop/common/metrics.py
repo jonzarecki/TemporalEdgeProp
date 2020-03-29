@@ -1,6 +1,6 @@
 import numpy as np
 from sklearn.metrics import accuracy_score
-
+from scipy.stats import entropy
 
 def mean_rank(y_test, y_pred):
     ranks = []
@@ -24,6 +24,14 @@ def hit_at_k(y_test, y_pred, k=1):
 
 def get_all_metrics(y_pred, y_test):
     metrics = {f'hit_at_{k}': round(hit_at_k(y_test, y_pred, k=k), 3) for k in [1, 5, 10]}
-    metrics.update({'mean_rank': round(mean_rank(y_test, y_pred), 3)})
-    metrics.update({'accuracy': round(accuracy_score(y_test.argmax(axis=-1), y_pred.argmax(axis=-1)), 3)})
+    metrics['mean_rank'] = round(mean_rank(y_test, y_pred), 3)
+    metrics['accuracy'] = round(accuracy_score(y_test.argmax(axis=-1), y_pred.argmax(axis=-1)), 3)
+
+    pred_classes = y_pred.argmax(axis=-1)
+    test_classes = y_test.argmax(axis=-1)
+    num_classes = y_pred.shape[-1]
+    metrics['KL_divergence'] = entropy(np.histogram(pred_classes, bins=num_classes)[0],
+                                                 np.histogram(test_classes, bins=num_classes)[0])
+
+
     return metrics

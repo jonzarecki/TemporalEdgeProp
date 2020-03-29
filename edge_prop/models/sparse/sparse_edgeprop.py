@@ -20,18 +20,14 @@ EDGEPROP_BASE_DIR = os.path.dirname(__file__) + "/"
 
 class SparseEdgeProp(SparseBaseModel):
     def _perform_edge_prop_on_graph(self, adj_mat: COO, y: COO, max_iter=100,
-                                    tol=1e-3,tb_exp_name:str=None) -> np.ndarray:
+                                    tol=1e-3) -> np.ndarray:
         """
         Performs the EdgeProp algorithm on the given graph.
         returns the label distribution (|N|, |N|) matrix with scores between -1, 1 stating the calculated label distribution.
         TODO: inaccurate
         """
         # create tensorboard
-        if tb_exp_name is not None:
-            # create the tensorboard
-            path = os.path.join(TENSORBOARD_DIR, tb_exp_name)  # , str(datetime.datetime.now()))
-            writer = SummaryWriter(path)
-            global_step = 0
+        global_step = 0
         logging.info("init calcs")
 
         label_distributions = y.copy()
@@ -46,21 +42,16 @@ class SparseEdgeProp(SparseBaseModel):
         adj_3d = adj_mat[:, :, np.newaxis]
         with tqdm(range(max_iter), desc='Fitting model', unit='iter') as pbar:
             for n_iter in pbar:
+
                 logging.info("check cond")
                 dif = np.inf if l_previous is None else np.abs((label_distributions - l_previous).data).sum()
                 pbar.set_postfix({'dif': dif})
                 if n_iter != 0 and dif < tol:  # did not change
                     break  # end the loop, finished
-                if tb_exp_name is not None:
-                    if y.shape[-1] > 2:
-                        logging.warning("Graph visualization of multi class not supported ATM!")
-                    else:
-                        graph_image = graph2image(label_distributions[:,:,-1], adj_mat)  # pretty slow
-                        writer.add_image("Graph", graph_image, global_step=global_step)
+                if self.verbose is not None and (global_step < 5 or global_step % 5 == 0):
                     self.edge_distributions = label_distributions
-                    self.write_evaluation_to_tensorboard(writer, global_step)
-                    writer.flush()
-                    global_step += 1
+                    self.write_evaluation_to_tensorboard(global_step)
+                global_step += 1
                 l_previous = label_distributions.copy()
                 # B = adj_mat.dot(label_distributions).sum(axis=1)  # TODO: attention, was axis=0
                 logging.info("dot prod")

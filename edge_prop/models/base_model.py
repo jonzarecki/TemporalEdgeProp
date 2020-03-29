@@ -6,18 +6,16 @@ import warnings
 from abc import ABCMeta
 
 import six
-from scipy import misc
 from sklearn.base import BaseEstimator, ClassifierMixin
 import numpy as np
 from sparse import DOK, COO
 from torch.utils.tensorboard import SummaryWriter
-from scipy.stats import entropy
+from matplotlib.pyplot import cm
 
 from edge_prop.graph_wrappers import BaseGraph
-from edge_prop.constants import NO_LABEL, EDGEPROP_BASE_DIR
+from edge_prop.constants import NO_LABEL, EDGEPROP_BASE_DIR, TENSORBOARD_DIR
 from edge_prop.common.metrics import get_all_metrics
-import networkx as nx
-import matplotlib.pyplot as plt
+from edge_prop.visualization.adj_mat_to_image import graph2image
 
 
 class BaseModel(six.with_metaclass(ABCMeta), BaseEstimator, ClassifierMixin):
@@ -41,6 +39,12 @@ class BaseModel(six.with_metaclass(ABCMeta), BaseEstimator, ClassifierMixin):
         self.tol = tol
         self.max_iter = max_iter
         self.tb_exp_name = tb_exp_name
+
+        self.verbose = False
+        if tb_exp_name is not None:
+            path = os.path.join(TENSORBOARD_DIR, tb_exp_name)  # , str(datetime.datetime.now()))
+            self.writer = SummaryWriter(path)
+            self.verbose = True
 
         self.sparse = False
 
@@ -106,18 +110,16 @@ class BaseModel(six.with_metaclass(ABCMeta), BaseEstimator, ClassifierMixin):
         """
         self.graph = g
         self.val = val
-        adj_mat = g.adjacency_matrix(sparse=self.sparse)
-        y = self._create_y(g, label)
-        self.num_classes = y.shape[-1]
+        self.adj_mat = g.adjacency_matrix(sparse=self.sparse)
+        self.y = self._create_y(g, label)
+        self.num_classes = self.y.shape[-1]
 
-        self.edge_distributions = self._perform_edge_prop_on_graph(adj_mat, y, max_iter=self.max_iter, tol=self.tol,
-                                                                   tb_exp_name=self.tb_exp_name)
+        self.edge_distributions = self._perform_edge_prop_on_graph(self.adj_mat, self.y, max_iter=self.max_iter, tol=self.tol)
 
         return self
 
     @abc.abstractmethod
-    def _perform_edge_prop_on_graph(self, adj_mat: np.ndarray, y: np.ndarray, max_iter=100,
-                                    tol=1e-1, tb_exp_name: str = None) -> COO:
+    def _perform_edge_prop_on_graph(self, adj_mat: np.ndarray, y: np.ndarray, max_iter=100, tol=1e-1) -> COO:
         """
         Performs the EdgeProp algorithm on the given graph.
         returns the label distribution (|N|, |N|) matrix with scores between -1, 1 stating the calculated label distribution.
@@ -145,14 +147,20 @@ class BaseModel(six.with_metaclass(ABCMeta), BaseEstimator, ClassifierMixin):
                     y[reverse_edge][label] = 1 / len(labels)
         return y
 
-    def write_evaluation_to_tensorboard(self, writer: SummaryWriter, global_step):
+    def write_evaluation_to_tensorboard(self, global_step):
+        # if self.num_classes > 2:
+        #     graph_image = graph2image(self.edge_distributions.argmax(axis=-1), self.adj_mat, color_map=cm.gist_ncar)
+        # else:
+        #     graph_image = graph2image(self.edge_distributions.argmax(axis=-1), self.adj_mat, color_map=cm.seismic)
+        # self.writer.add_image("Graph", graph_image, global_step=global_step)
+
         for val_name, (val_indices, y_val) in self.val.items():
             y_pred = self.predict_proba(val_indices)
             metrics = get_all_metrics(y_pred, y_val)
             for metric_name, metric_value in metrics.items():
-                writer.add_scalar(f'{val_name}/{metric_name}', metric_value, global_step=global_step)
+                self.writer.add_scalar(f'{val_name}/{metric_name}', metric_value, global_step=global_step)
 
-            pred_classes = y_pred.argmax(axis=-1)
-            writer.add_histogram(f'{val_name}/predicted_class', pred_classes, global_step=global_step)
-            hist = entropy(np.histogram(pred_classes, bins=self.num_classes)[0], base=2) / entropy([1] * self.num_classes, base=2)
-            writer.add_scalar(f'{val_name}/predicted_class_entropy', hist, global_step=global_step)
+            pred_classes = y_pred
+            self.writer.add_histogram(f'{val_name}/predicted_class', pred_classes, global_step=global_step)
+
+        self.writer.flush()

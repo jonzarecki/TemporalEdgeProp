@@ -37,16 +37,15 @@ def run_alg_on_data(alpha, test_size, alg_cls):
     graph, true_labels, test_indices, train_indices = DataLoader(path, test_size=test_size).load_data()  # node number doesn't work on aminer
     y_test = true_labels[test_indices]
     y_train = true_labels[train_indices]
-    print(np.unique(y_train.argmax(axis=1), return_counts=True))
-    print(np.unique(y_test.argmax(axis=1), return_counts=True))
 
     print(f"Calculating {alg_cls.__name__}:")
     st = time.time()
     if alg_cls == Node2VecClassifier:
         model = alg_cls(cache_name=data_name)
+        model.fit(graph, LABEL_TRAIN)
     else:
         model = alg_cls(max_iter=300, alpha=alpha, tol=1e-2, tb_exp_name=expr_name)
-    model.fit(graph, LABEL_TRAIN, val={'train:': (train_indices, y_train), 'validation': (test_indices, y_test)})
+        model.fit(graph, LABEL_TRAIN, val={'train': (train_indices, y_train), 'validation': (test_indices, y_test)})
     y_pred = model.predict_proba(test_indices)
     print(np.unique(y_pred.argmax(axis=1), return_counts=True))
     # breakpoint()
@@ -82,4 +81,3 @@ if __name__ == '__main__':
         our_metrics = results[get_expr_name(alpha, test_size, SparseEdgeProp)]
         node2vec_metrics = results[get_expr_name(alpha, test_size, Node2VecClassifier)]
         print(f"alpha={alpha}, test_size={test_size}, \t Baseline: {baseline_metrics} \t New Model: {our_metrics}, Node2vec: {node2vec_metrics}")
-

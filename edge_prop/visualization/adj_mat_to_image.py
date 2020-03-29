@@ -2,17 +2,18 @@ from edge_prop.constants import EDGEPROP_BASE_DIR
 import networkx as nx
 import os
 import matplotlib.pyplot as plt
+from matplotlib.pyplot import cm
 from scipy import misc, ndimage
 import numpy as np
 from PIL import Image
 
 
-def graph2image(probas_mat, adj_mat):
+def graph2image(probas_mat, adj_mat, color_map=cm.seismic):
     graph = _create_graph(probas_mat, adj_mat)
-    colors = nx.get_edge_attributes(graph, 'proba').values()
+    colors = nx.get_edge_attributes(graph, 'color').values()
 
     # create matplotlib figure
-    figure = _create_graph_figure(graph, colors)
+    figure = _create_graph_figure(graph, colors, color_map=color_map)
     image = _plot_to_image(figure)
     return image
 
@@ -25,9 +26,9 @@ def _plot_to_image(figure):
     return image
 
 
-def _create_graph_figure(graph, colors):
+def _create_graph_figure(graph, colors, color_map=cm.seismic):
     options = {"edge_color": colors,
-               "edge_cmap": plt.cm.seismic,
+               "edge_cmap": color_map,
                "width": 4,
                "with_labels": False}
     figure = plt.figure()
@@ -41,5 +42,5 @@ def _create_graph(label_distribution, adj_mat) -> nx.Graph:
     edges = list(zip(rows.tolist(), cols.tolist()))
     graph = nx.from_edgelist(edges)
     edge2label = {edge: label_distribution[edge] for edge in edges}
-    nx.set_edge_attributes(graph, edge2label, 'proba')
+    nx.set_edge_attributes(graph, edge2label, 'color')
     return graph

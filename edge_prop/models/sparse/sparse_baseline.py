@@ -3,33 +3,24 @@ import os
 import time
 
 import numpy as np
-from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 from sparse import COO
 
 from edge_prop.constants import TENSORBOARD_DIR
 from edge_prop.models import SparseBaseModel
-from edge_prop.visualization.adj_mat_to_image import graph2image
-
 
 EDGEPROP_BASE_DIR = os.path.dirname(__file__) + "/"
 
 
 class SparseBaseline(SparseBaseModel):
     def _perform_edge_prop_on_graph(self, adj_mat: np.ndarray, y: np.ndarray, max_iter=50,
-                                    tol=1e-3, tb_exp_name=None) -> np.ndarray:
+                                    tol=1e-3) -> np.ndarray:
         """
         Performs the EdgeProp algorithm on the given graph.
         returns the label distribution (|N|, |N|) matrix with scores between -1, 1 stating the calculated label distribution.
         """
         # A = adj_mat.todense()
-        if tb_exp_name is not None:
-            # create the tensorboard
-            # logging.warning("tensorboard Not implemented yet for baseline")
-            # self.tb_exp_name = None
-            path = os.path.join(TENSORBOARD_DIR, tb_exp_name)  # , str(datetime.datetime.now()))
-            writer = SummaryWriter(path)
-            global_step = 0
+        global_step = 0
         Y = y
 
         l_previous = None
@@ -61,22 +52,16 @@ class SparseBaseline(SparseBaseModel):
                 pbar.set_postfix({'dif': dif})
                 if n_iter != 0 and dif < tol:  # did not change
                     break  # end the loop, finished
-                if tb_exp_name is not None:
+                if self.verbose and (global_step < 5 or global_step % 5 == 0):
                     last_Y_tmp = COO(last_Y)
-                    last_Y_edges = np.multiply(adj_mat[:, :, np.newaxis], last_Y_tmp[:, np.newaxis, :]) + \
+                    last_Y_edges = np.multiply(adj_mat[:, :, np.newaxis], last_Y_tmp[:, np.newaxis, :]) * \
                                    np.multiply(adj_mat[:, :, np.newaxis], last_Y_tmp[np.newaxis, :, :])
-                    print("starting norm")
                     mat_sum = np.sum(last_Y_edges, axis=-1, keepdims=True)
                     mat_sum.fill_value = np.float64(1.0)
-                    if y.shape[-1] > 2:
-                        logging.warning("Graph visualization of multi class not supported ATM!")
-                    else:
-                        graph_image = graph2image(label_distributions[:, :, -1], adj_mat)
-                        writer.add_image("Graph", graph_image, global_step=global_step)
                     self.edge_distributions = last_Y_edges / mat_sum  # sums all elems in dim 2 to 1
-                    self.write_evaluation_to_tensorboard(writer, global_step)
-                    writer.flush()
-                    global_step += 1
+                    self.write_evaluation_to_tensorboard(global_step)
+
+                global_step += 1
                 l_previous = last_Y.copy()
 
                 # B = adj_mat.dot(last_Y)
@@ -92,7 +77,7 @@ class SparseBaseline(SparseBaseModel):
         st = time.time()
         print("starting expand to edge")
         last_Y = COO(last_Y)
-        last_Y_edges = np.multiply(adj_mat[:, :, np.newaxis], last_Y[:, np.newaxis, :]) + \
+        last_Y_edges = np.multiply(adj_mat[:, :, np.newaxis], last_Y[:, np.newaxis, :]) * \
                        np.multiply(adj_mat[:, :, np.newaxis], last_Y[np.newaxis, :, :])
         print("starting norm")
         mat_sum = np.sum(last_Y_edges, axis=-1, keepdims=True)
@@ -110,6 +95,5 @@ class SparseBaseline(SparseBaseModel):
         # edge_exists = y.sum(axis=-1) > 0
         # last_Y[edge_exists] = y[edge_exists] * self.alpha + last_Y[edge_exists] * (1 - self.alpha)
         #
-
 
         return last_Y_edges

@@ -1,6 +1,7 @@
 import networkx as nx
 import numpy as np
 from sparse import COO
+import scipy
 
 
 class BaseGraph:
