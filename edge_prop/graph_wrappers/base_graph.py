@@ -32,7 +32,7 @@ class BaseGraph:
         self.edge_timestamp_in_order = None
 
     def adjacency_matrix(self, sparse=True):
-        sadj_mat = nx.adjacency_matrix(self.graph_nx, nodelist=self.node_order)
+        sadj_mat = nx.adjacency_matrix(self.graph_nx, nodelist=self.node_order) + scipy.sparse.eye(self.n_nodes)
 
         if not sparse:
             return np.asarray(sadj_mat.todense(), dtype=bool)

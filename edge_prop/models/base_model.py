@@ -114,7 +114,8 @@ class BaseModel(six.with_metaclass(ABCMeta), BaseEstimator, ClassifierMixin):
         self.y = self._create_y(g, label)
         self.num_classes = self.y.shape[-1]
 
-        self.edge_distributions = self._perform_edge_prop_on_graph(self.adj_mat, self.y, max_iter=self.max_iter, tol=self.tol)
+        self.edge_distributions = self._perform_edge_prop_on_graph(self.adj_mat, self.y, max_iter=self.max_iter,
+                                                                   tol=self.tol)
 
         return self
 
@@ -151,7 +152,7 @@ class BaseModel(six.with_metaclass(ABCMeta), BaseEstimator, ClassifierMixin):
         # if self.num_classes > 2:
         #     graph_image = graph2image(self.edge_distributions.argmax(axis=-1), self.adj_mat, color_map=cm.gist_ncar)
         # else:
-        #     graph_image = graph2image(self.edge_distributions.argmax(axis=-1), self.adj_mat, color_map=cm.seismic)
+        #     graph_image = graph2image(self.edge_distributions[:, :, -1], self.adj_mat, color_map=cm.seismic)
         # self.writer.add_image("Graph", graph_image, global_step=global_step)
 
         for val_name, (val_indices, y_val) in self.val.items():
@@ -160,7 +161,7 @@ class BaseModel(six.with_metaclass(ABCMeta), BaseEstimator, ClassifierMixin):
             for metric_name, metric_value in metrics.items():
                 self.writer.add_scalar(f'{val_name}/{metric_name}', metric_value, global_step=global_step)
 
-            pred_classes = y_pred
+            pred_classes = np.argmax(y_pred, axis=-1)
             self.writer.add_histogram(f'{val_name}/predicted_class', pred_classes, global_step=global_step)
 
         self.writer.flush()
